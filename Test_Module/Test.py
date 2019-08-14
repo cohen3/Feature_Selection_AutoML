@@ -10,7 +10,7 @@ class Test_Module(AbstractController):
         pass
 
     def setUp(self):
-        print('setting up test_module ')
+        print('setting up test_module')
         self.test_text = getConfig().eval(self.__class__.__name__, "init_value")
 
     def execute(self, window_start):
