@@ -52,3 +52,25 @@ for module in pipeline:
 
 bmrk_results.writerow(bmrk)
 bmrk_file.flush()
+
+# x = pipeline[0].execQuery('SELECT * FROM dataset_feature_correlation WHERE feature1=\'f1\'')
+# for record in x:
+#     print(record)
+
+"""
+pipeline:
+|--- create database connection
+| |--- create schema if needed
+|--- dataset loader
+| |--- create a correlation matrix
+|--- graph generation
+| |--- create a table fit to the schema
+| |--- fill it with correlations from the matrix
+|--- subgraph generation
+| |--- randomly choose records from the tables (the full graph)
+.
+.
+.
+
+
+"""

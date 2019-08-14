@@ -1,23 +1,24 @@
 # # Created by aviade
 # # Time: 31/03/2016 09:15
-# from __future__ import print_function
-# import logging
-# import os
-# import platform
-# 
-# import sqlalchemy
-# from configuration.config_class import getConfig
-# from sqlalchemy import create_engine
-# from sqlalchemy.orm import sessionmaker
-# from sqlalchemy.orm import aliased
-# from sqlalchemy import event
-# from sqlalchemy.sql.operators import ColumnOperators
-# from sqlalchemy import Column, func, and_, or_, not_
-# from sqlalchemy.ext.declarative import declarative_base
-# from sqlalchemy import Boolean, Integer, Unicode, FLOAT
-# from sqlalchemy.sql.schema import ForeignKey
-# from sqlalchemy.sql import text
-# from datetime import datetime, timedelta
+from __future__ import print_function
+import os
+import platform
+
+import sqlalchemy
+from configuration.configuration import getConfig
+from tool_kit.AbstractController import AbstractController
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import aliased
+from sqlalchemy import event
+from sqlalchemy.sql.operators import ColumnOperators
+from sqlalchemy import Column, func, and_, or_, not_
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Boolean, Integer, Unicode, FLOAT
+from sqlalchemy.sql.schema import ForeignKey
+from sqlalchemy.sql import text
+from datetime import datetime, timedelta
+
 # from commons.commons import *
 # from commons.consts import DB_Insertion_Type, Author_Type, Author_Connection_Type
 # import re
@@ -45,608 +46,65 @@
 # 
 # domain = getConfig().get("DEFAULT", "domain")
 # 
-# 
-# class Author(Base):
-#     __tablename__ = 'authors'
-# 
-#     name = Column(Unicode, primary_key=True)
-#     domain = Column(Unicode, primary_key=True)
-#     author_guid = Column(Unicode, primary_key=True)
-# 
-#     author_screen_name = Column(Unicode, default=None)
-#     author_full_name = Column(Unicode, default=None)
-#     author_osn_id = Column(Unicode, default=None)
-#     description = Column(Unicode, default=None)
-#     created_at = Column(Unicode, default=None)
-#     statuses_count = Column(Integer, default=None)
-#     followers_count = Column(Integer, default=None)
-#     favourites_count = Column(Integer, default=None)
-#     friends_count = Column(Integer, default=None)
-#     listed_count = Column(Integer, default=None)
-#     language = Column(Unicode, default=None)
-#     profile_background_color = Column(Unicode, default=None)
-#     profile_background_tile = Column(Unicode, default=None)
-#     profile_banner_url = Column(Unicode, default=None)
-#     profile_image_url = Column(Unicode, default=None)
-#     profile_link_color = Column(Unicode, default=None)
-#     profile_sidebar_fill_color = Column(Unicode, default=None)
-#     profile_text_color = Column(Unicode, default=None)
-#     default_profile = Column(Unicode, default=None)
-#     contributors_enabled = Column(Unicode, default=None)
-#     default_profile_image = Column(Unicode, default=None)
-#     geo_enabled = Column(Unicode, default=None)
-#     protected = Column(Boolean, default=None)
-#     location = Column(Unicode, default=None)
-#     notifications = Column(Unicode, default=None)
-#     time_zone = Column(Unicode, default=None)
-#     url = Column(Unicode, default=None)
-#     utc_offset = Column(Unicode, default=None)
-#     verified = Column(Unicode, default=None)
-#     is_suspended_or_not_exists = Column(dt, default=None)
-# 
-#     # Tumblr fields
-#     default_post_format = Column(Unicode, default=None)
-#     likes_count = Column(Integer, default=None)
-#     allow_questions = Column(Boolean, default=False)
-#     allow_anonymous_questions = Column(Boolean, default=False)
-#     image_size = Column(Integer, default=None)
-# 
-#     media_path = Column(Unicode, default=None)
-# 
-#     # Facebook fields
-#     work = Column(Unicode, default=None)
-#     education = Column(Unicode, default=None)
-#     professional_skills = Column(Unicode, default=None)
-#     current_residence = Column(Unicode, default=None)
-#     past_residence = Column(Unicode, default=None)
-#     birth_day = Column(Unicode, default=None)
-#     gender = Column(Unicode, default=None)
-#     email = Column(Unicode, default=None)
-#     relationship_status = Column(Unicode, default=None)
-#     # family_members = Column(Unicode, default=None)
-# 
-#     author_type = Column(Unicode, default=None)
-#     bad_actors_collector_insertion_date = Column(Unicode, default=None)
-#     xml_importer_insertion_date = Column(Unicode, default=None)
-#     vico_dump_insertion_date = Column(Unicode, default=None)
-#     missing_data_complementor_insertion_date = Column(Unicode, default=None)
-#     bad_actors_markup_insertion_date = Column(Unicode, default=None)
-#     mark_missing_bad_actor_retweeters_insertion_date = Column(Unicode, default=None)
-#     author_sub_type = Column(Unicode, default=None)
-#     timeline_overlap_insertion_date = Column(Unicode, default=None)
-#     original_tweet_importer_insertion_date = Column(Unicode, default=None)
-# 
-#     def __repr__(self):
-#         return "<Author(name='%s',domain='%s',author_guid='%s', statuses_count='%s')>" % (
-#             self.name, self.domain, self.author_guid, self.statuses_count)
-# 
-# 
-# class AuthorConnection(Base):
-#     __tablename__ = 'author_connections'
-# 
-#     source_author_guid = Column(Unicode, primary_key=True)
-#     destination_author_guid = Column(Unicode, primary_key=True)
-#     connection_type = Column(Unicode, primary_key=True)
-#     weight = Column(FLOAT, default=0.0)
-#     insertion_date = Column(Unicode, default=None)
-# 
-#     def __repr__(self):
-#         return "<AuthorConnection(source_author_guid='%s', destination_author_guid='%s', connection_type='%s', " \
-#                "weight='%s', insertion_date='%s')>" % (self.source_author_guid, self.destination_author_guid,
-#                                                        self.connection_type, self.weight, self.insertion_date)
-# 
-# 
-# class TempAuthorConnection(Base):
-#     __tablename__ = 'temp_author_connections'
-# 
-#     source_author_osn_id = Column(Unicode, primary_key=True)
-#     destination_author_osn_id = Column(Unicode, primary_key=True)
-#     connection_type = Column(Unicode, primary_key=True)
-#     weight = Column(FLOAT, default=0.0)
-#     insertion_date = Column(Unicode, default=None)
-# 
-#     def __repr__(self):
-#         return "<TempAuthorConnection(source_author_osn_id='%s', destination_author_osn_id='%s', connection_type='%s', " \
-#                "weight='%s', insertion_date='%s')>" % (self.source_author_osn_id, self.destination_author_osn_id,
-#                                                        self.connection_type, self.weight, self.insertion_date)
-# 
-# 
-# class PostRetweeterConnection(Base):
-#     __tablename__ = 'post_retweeter_connections'
-# 
-#     post_osn_id = Column(Integer, primary_key=True)
-#     retweeter_twitter_id = Column(Integer, primary_key=True)
-#     connection_type = Column(Unicode, primary_key=True)
-#     insertion_date = Column(Unicode, default=None)
-# 
-#     def __repr__(self):
-#         return "<Post_Retweeter_Connection(post_twitter_id='%s', retweeter_twitter_id='%s', connection_type='%s')>" % (
-#             self.post_osn_id, self.retweeter_twitter_id, self.connection_type)
-# 
-# 
-# class PostUserMention(Base):
-#     __tablename__ = 'post_user_mentions'
-# 
-#     post_guid = Column(Integer, primary_key=True)
-#     user_mention_twitter_id = Column(Integer, primary_key=True)
-#     user_mention_screen_name = Column(Unicode, default=None)
-# 
-#     def __repr__(self):
-#         return "<PostUserMention(post_guid='%s', user_mention_twitter_id='%s', user_mention_screen_name='%s')>" % (
-#             self.post_guid, self.user_mention_twitter_id, self.user_mention_screen_name)
-# 
-# 
-# class Post(Base):
-#     __tablename__ = 'posts'
-# 
-#     post_id = Column(Unicode, primary_key=True, index=True)
-#     author = Column(Unicode, default=None)
-#     guid = Column(Unicode, default=None)
-#     title = Column(Unicode, default=None)
-#     url = Column(Unicode, default=None)
-#     date = Column(dt, default=None)
-#     content = Column(Unicode, default=None)
-#     description = Column(Unicode, default=None)
-#     is_detailed = Column(Boolean, default=True)
-#     is_LB = Column(Boolean, default=False)
-#     is_valid = Column(Boolean, default=True)
-#     domain = Column(Unicode, primary_key=True, default=None)
-#     author_guid = Column(Unicode, default=None)
-# 
-#     media_path = Column(Unicode, default=None)
-# 
-#     # keywords = Column(Unicode, default=None)
-#     # paragraphs = Column(Unicode, default=None)
-#     post_osn_guid = Column(Unicode, default=None)
-#     post_type = Column(Unicode, default=None)
-#     post_format = Column(Unicode, default=None)
-#     reblog_key = Column(Unicode, default=None)
-#     tags = Column(Unicode, default=None)
-#     is_created_via_bookmarklet = Column(Boolean, default=None)
-#     is_created_via_mobile = Column(Boolean, default=None)
-#     source_url = Column(Unicode, default=None)
-#     source_title = Column(Unicode, default=None)
-#     is_liked = Column(Boolean, default=None)
-#     post_state = Column(Unicode, default=None)
-# 
-#     post_osn_id = Column(Integer, default=None)
-#     retweet_count = Column(Integer, default=None)
-#     favorite_count = Column(Integer, default=None)
-#     created_at = Column(Unicode, default=None)
-#     xml_importer_insertion_date = Column(Unicode, default=None)
-#     timeline_importer_insertion_date = Column(Unicode, default=None)
-#     original_tweet_importer_insertion_date = Column(Unicode, default=None)
-# 
-#     def __repr__(self):
-#         return "<Post(post_id='%s', guid='%s', title='%s', url='%s', date='%s', content='%s', author='%s', is_detailed='%s',  is_LB='%s',domain='%s',author_guid='%s')>" % (
-#             self.post_id, self.guid, self.title, self.url, self.date, self.content, self.author, self.is_detailed,
-#             self.is_LB, self.domain, self.author_guid)
-# 
-# 
-# class Post_citation(Base):
-#     __tablename__ = 'post_citations'
-# 
-#     post_id_from = Column(Unicode, ForeignKey('posts.post_id', ondelete="CASCADE"), primary_key=True)
-#     post_id_to = Column(Unicode, ForeignKey('posts.post_id', ondelete="CASCADE"), primary_key=True)
-#     url_from = Column(Unicode, index=True)  # need to be deleted do not use it
-#     url_to = Column(Unicode, index=True)  # need to be deleted do not use it
-# 
-#     def __repr__(self):
-#         return "<Post_citation(post_id_from='%s', post_id_to='%s', url_from='%s', url_to='%s')>" % (
-#             self.post_id_from, self.post_id_to, self.url_from, self.url_to)
-# 
-# 
-# class Target_Article(Base):
-#     __tablename__ = 'target_articles'
-# 
-#     post_id = Column(Unicode, ForeignKey('posts.post_id', ondelete="CASCADE"), primary_key=True)
-#     author_guid = Column(Unicode, ForeignKey('posts.author_guid', ondelete="CASCADE"), primary_key=True)
-#     title = Column(Unicode, default=None)
-#     description = Column(Unicode, default=None)
-#     keywords = Column(Unicode, default=None)
-# 
-#     def __repr__(self):
-#         return "<TargetArticle(post_id='%s', author_guid='%s', title='%s', description='%s', keywords='%s')>" % (
-#             self.post_id, self.author_guid, self.title, self.description, self.keywords)
-# 
-# 
-# # could be a 'paragraph' or caption
-# class Target_Article_Item(Base):
-#     __tablename__ = 'target_article_items'
-# 
-#     post_id = Column(Unicode, ForeignKey('posts.post_id', ondelete="CASCADE"), primary_key=True)
-#     author_guid = Column(Unicode, ForeignKey('posts.author_guid', ondelete="CASCADE"), primary_key=True)
-#     type = Column(Unicode, default=None, primary_key=True)
-#     item_number = Column(Integer, default=None, primary_key=True)
-#     content = Column(Unicode, default=None)
-# 
-#     def __repr__(self):
-#         return "<Target_Article_Item(post_id='%s', type='%s', item_number='%s', content='%s')>" % (
-#             self.post_id, self._author_guid, self.type, self.item_number, self.content)
-# 
-# 
-# class Text_From_Image(Base):
-#     __tablename__ = 'image_hidden_texts'
-# 
-#     post_id = Column(Unicode, ForeignKey('posts.post_id', ondelete="CASCADE"), primary_key=True)
-#     author_guid = Column(Unicode, ForeignKey('posts.author_guid', ondelete="CASCADE"), primary_key=True)
-#     media_path = Column(Unicode, default=None)
-#     content = Column(Unicode, default=None)
-# 
-#     def __repr__(self):
-#         return "<Image_Hidden_Text(post_id='%s', author_guid='%s', media_path='%s', content='%s')>" % (
-#             self.post_id, self.author_guid, self.media_path, self.content)
-# 
-# 
-# class Image_Tags(Base):
-#     __tablename__ = 'image_tags'
-# 
-#     post_id = Column(Unicode, ForeignKey('posts.post_id', ondelete="CASCADE"), primary_key=True)
-#     author_guid = Column(Unicode, ForeignKey('posts.author_guid', ondelete="CASCADE"), primary_key=True)
-#     media_path = Column(Unicode, default=None)
-#     tags = Column(Unicode, default=None)
-# 
-#     def __repr__(self):
-#         return "<Image_Tags(post_id='%s', author_guid='%s', media_path='%s', tags='%s')>" % (
-#             self.post_id, self.author_guid, self.media_path, self.tags)
-# 
-# 
-# class AuthorCitation(Base):
-#     __tablename__ = 'author_citations'
-#     # author_id_from = Column(Integer,ForeignKey("authors.author_id",ondelete="CASCADE"),primary_key=True)
-#     # author_id_from = Column(Integer,primary_key=True)
-#     from_author = Column(Unicode, primary_key=True)
-#     from_domain = Column(Unicode, primary_key=True)
-#     # author_id_to = Column(Integer,ForeignKey("authors.author_id",ondelete="CASCADE"),primary_key=True)
-#     # author_id_to = Column(Integer,primary_key=True)
-#     to_author = Column(Unicode, primary_key=True)
-#     to_domain = Column(Unicode, primary_key=True)
-#     window_start = Column(dt, primary_key=True)
-#     window_end = Column(dt, primary_key=True, default=None)
-#     number_of_citations = Column(Integer, default=None)
-#     from_author_guid = Column(Integer, ForeignKey("authors.author_guid", ondelete="CASCADE"))
-#     to_author_guid = Column(Integer, ForeignKey("authors.author_guid", ondelete="CASCADE"))
-# 
-#     def __repr__(self):
-#         return "<AuthorCitation(window_start='%s',from_author='%s',from_domain='%s',to_author='%s',to_domain='%s',number_of_citations='%s',from_author_guid='%s',to_author_guid='%s')>" % (
-#             self.window_start, self.from_author, self.from_domain, self.to_author, self.to_domain,
-#             self.number_of_citations,
-#             self.from_author_guid, self.to_author_guid)
-# 
-# 
-# class AuthorFeatures(Base):
-#     __tablename__ = 'author_features'
-#     author_guid = Column(Unicode, primary_key=True)
-#     window_start = Column(dt, primary_key=True)
-#     window_end = Column(dt, primary_key=True)
-#     attribute_name = Column(Unicode, primary_key=True)
-#     attribute_value = Column(Unicode)
-# 
-#     def __repr__(self):
-#         return "<AuthorFeatures(author_guid='%s', window_start='%s', window_end='%s', attribute_name='%s', attribute_value='%s')> " % (
-#             self.author_guid, self.window_start, self.window_end, self.attribute_name, self.attribute_value)
-# 
-#     def __init__(self, _author_guid=None, _window_start=None, _window_end=None, _attribute_name=None,
-#                  _attribute_value=None):
-#         self.author_guid = _author_guid
-#         self.window_start = _window_start
-#         self.window_end = _window_end
-#         self.attribute_name = _attribute_name
-#         self.attribute_value = _attribute_value
-# 
-# 
-# class Author_boost_stats(Base):
-#     __tablename__ = 'authors_boost_stats'
-# 
-#     window_start = Column(dt, default=None, primary_key=True)
-#     window_end = Column(dt, default=None)
-#     # author_id = Column(Integer,ForeignKey("authors.author_id"),primary_key=True)
-#     # author_id = Column(Integer,default=None) #@todo: remove field. use name and domain. reinsert author_id appropriately.
-#     author_name = Column(Integer, default=None, primary_key=True)
-#     author_domain = Column(Integer, default=None, primary_key=True)  # @todo: add domain values
-#     boosting_timeslots_participation_count = Column(Integer, default=None)
-#     count_of_authors_sharing_boosted_posts = Column(Integer, default=None)
-#     num_of_pointers = Column(Integer, default=None)
-#     num_of_pointed_posts = Column(Integer, default=None)
-#     pointers_scores = Column(Unicode, default=None)
-#     scores_sum = Column(FLOAT, default=None)
-#     scores_avg = Column(FLOAT, default=None)
-#     scores_std = Column(FLOAT, default=None)
-#     author_guid = Column(Unicode, default=None)
-# 
-#     def __repr__(self):
-#         return "<Author_boost_stats(window_start='%s', window_end='%s',boosting_timeslots_participation_count='%s',count_of_authors_sharing_boosted_posts='%s',num_of_pointers='%s',num_of_pointed_posts='%s',pointers_scores='%s',scores_sum='%s',scores_avg='%s',scores_std='%s',author_guid='%s')>" % (
-#             self.window_start, self.window_end, self.boosting_timeslots_participation_count,
-#             self.count_of_authors_sharing_boosted_posts, self.num_of_pointers, self.num_of_pointed_posts,
-#             self.pointers_scores, self.scores_sum, self.scores_avg, self.scores_std, self.author_guid)
-# 
-# 
-# class Post_to_pointers_scores(Base):
-#     __tablename__ = 'posts_to_pointers_scores'
-#     post_id_to = Column(Integer, ForeignKey("post_citations.post_id_to"), primary_key=True)
-#     window_start = Column(dt, primary_key=True)
-#     window_end = Column(dt, default=None)
-#     url_to = Column(Unicode, default=None)
-#     # author_id_from = Column(Integer,ForeignKey("authors.author_id"),primary_key=True)
-#     # author_id_from = Column(Integer,default=None)#@todo: remove field. use name and domain. reinsert author_id appropriately.
-#     author_name = Column(Integer, default=None, primary_key=True)
-#     author_domain = Column(Integer, default=None, primary_key=True)  # @todo: add domain values
-#     datetime = Column(Unicode, primary_key=True)
-#     pointer_score = Column(FLOAT, default=None)
-# 
-#     def __repr__(self):
-#         return "<Post_to_pointers_scores(post_id_to='%s', window_start='%s',window_end='%s', url_to='%s',author_id_from='%s',dt='%s',pointer_score='%s')>" % (
-#             self.post_id_to, self.window_start, self.window_end, self.url_to, self.author_id_from, self.dt,
-#             self.pointer_score)
-# 
-# 
-# class Posts_representativeness(Base):
-#     __tablename__ = 'posts_representativeness'
-# 
-#     post_id = Column(Unicode, ForeignKey("posts.post_id"), primary_key=True)
-#     topic_id = Column(Integer, primary_key=True)
-#     url = Column(Unicode, default=None)
-#     how_many_times_cited_in_topic = Column(Integer, default=None)
-#     in_how_many_topics = Column(Integer, default=None)
-#     post_count = Column(Integer, default=None)
-#     tfidf = Column(FLOAT, default=None)
-#     tof = Column(Integer, default=None)
-# 
-#     def __repr__(self):
-#         return "<Posts_representativeness(post_id='%s', topic_id='%s',url='%s', how_many_times_cited_in_topic='%s', in_how_many_topics='%s', post_count='%s', tfidf='%s', tof='%s')>" % \
-#                (self.post_id, self.topic_id, self.url, self.how_many_times_cited_in_topic, self.in_how_many_topics,
-#                 self.post_count, self.tfidf, self.tof)
-# 
-# 
-# class AnchorAuthor(Base):
-#     __tablename__ = 'anchor_authors'
-# 
-#     author_guid = Column(Unicode, ForeignKey("authors.author_guid"), primary_key=True)
-#     author_type = Column(Unicode, default=None)
-# 
-#     def __init__(self, _author_guid, _author_type):
-#         self.author_guid = _author_guid
-#         self.author_type = _author_type
-# 
-#     def __repr__(self):
-#         return "<TestAuthors(author_guid='%s', author_type='%s')>" % \
-#                (self.author_guid, self.author_type)
-# 
-# 
-# class RandomAuthorForGraph(Base):
-#     __tablename__ = 'random_authors_for_graphs'
-# 
-#     author_guid = Column(Unicode, ForeignKey("authors.author_guid"), primary_key=True)
-#     author_type = Column(Unicode, default=None)
-# 
-#     def __repr__(self):
-#         return "<RandomAuthorForGraph(author_guid='%s', author_type='%s')>" % \
-#                (self.author_guid, self.author_type)
-# 
-# 
-# class SinglePostByAuthor(Base):
-#     __tablename__ = 'single_post_by_author'
-# 
-#     post_id = Column(Unicode, primary_key=True)
-#     author_guid = Column(Unicode, primary_key=True)
-#     date = Column(dt)
-#     content = Column(Unicode)
-#     domain = Column(Unicode)
-# 
-#     def __repr__(self):
-#         return "<SinglePostByAuthor(post_id='%s', author_guid='%s',date='%s', content='%s', domain='%s')>" % \
-#                (self.post_id, self.author_guid, self.date, self.content, self.domain)
-# 
-# 
-# class Struct:
-#     def __init__(self, **entries): self.__dict__.update(entries)
-# 
-# 
-# class Post_to_topic(Base):
-#     __tablename__ = "posts_to_topic"
-# 
-#     topic_id = Column(Integer, ForeignKey("topics.topic_id"), primary_key=True)
-#     window_start = Column(dt, default=None, primary_key=True)
-#     window_end = Column(dt, default=None)
-#     post_id = Column(Integer, ForeignKey("posts.post_id"), primary_key=True)
-#     guid = Column(Unicode, default=None)
-#     url = Column(Unicode, default=None)
-# 
-#     def __repr__(self):
-#         return "<Post_to_topic(topic_id='%s',window_start='%s',window_end='%s', post_id='%s',guid='%s', url='%s')>" % (
-#             self.topic_id, self.window_start, self.window_end, self.post_id, self.guid, self.url)
-# 
-# 
-# class PostTopicMapping(Base):
-#     __tablename__ = "post_topic_mapping"
-# 
-#     post_id = Column(Unicode, ForeignKey("posts.post_id"), primary_key=True)
-#     max_topic_dist = Column(FLOAT, default=None)
-#     max_topic_id = Column(Integer, default=None)
-# 
-# 
-# class Term(Base):
-#     __tablename__ = "terms"
-# 
-#     term_id = Column(Integer, primary_key=True)
-#     description = Column(Unicode, default=None)
-# 
-# 
-# class Topic(Base):
-#     __tablename__ = "topics"
-# 
-#     topic_id = Column(Integer, primary_key=True)
-#     term_id = Column(Integer, ForeignKey("terms.term_id"), primary_key=True)
-#     probability = Column(FLOAT, default=None)
-# 
-# 
-# class Politifact_Liar_Dataset(Base):
-#     __tablename__ = "politifact_liar_dataset"
-# 
-#     post_guid = Column(Unicode, ForeignKey("posts.guid"), primary_key=True)
-#     original_id = Column(Integer, default=None)
-#     statement = Column(Unicode, default=None)
-#     targeted_label = Column(Unicode, default=None)
-#     dataset_affiliation = Column(Unicode, default=None)
-#     subject = Column(Unicode, default=None)
-#     speaker = Column(Unicode, default=None)
-#     speaker_job_title = Column(Unicode, default=None)
-#     state_info = Column(Unicode, default=None)
-#     party_affiliation = Column(Unicode, default=None)
-#     barely_true_count = Column(Integer, default=None)
-#     false_count = Column(Integer, default=None)
-#     half_true_count = Column(Integer, default=None)
-#     mostly_true_count = Column(Integer, default=None)
-#     pants_on_fire_count = Column(Integer, default=None)
-#     context = Column(Unicode, default=None)
-# 
-#     def __repr__(self):
-#         return "<Politifact_Liar_Dataset(post_guid='%s', original_id='%s', statement='%s',targeted_label='%s')>" % (
-#             self.post_guid, self.original_id, self.statement, self.targeted_label)
-# 
-# 
-# class Claim_Tweet_Connection(Base):
-#     __tablename__ = "claim_tweet_connection"
-# 
-#     claim_id = Column(Unicode, primary_key=True)  # PolitiFact post
-#     post_id = Column(Unicode, primary_key=True)  # crawled tweet by
-# 
-# class Claim(Base):
-#     __tablename__ = "claims"
-# 
-#     claim_id = Column(Unicode, primary_key=True, index=True)
-#     title = Column(Unicode, default=None)
-#     description = Column(Unicode, default=None)
-#     url = Column(Unicode, default=None)
-#     verdict_date = Column(dt, default=None)
-#     keywords = Column(Unicode, default=None)
-#     domain = Column(Unicode, default=None)
-#     verdict = Column(Unicode, default=None)
-#     category = Column(Unicode, default=None)
-#     sub_category = Column(Unicode, default=None)
-# 
-#     def __repr__(self):
-#         return "<Claim(claim_id='%s', title='%s', description='%s', url='%s', vardict_date='%s', keywords='%s', domain='%s', verdicy='%s')>" % (
-#             self.claim_id, self.title, self.description, self.url, self.verdict_date, self.keywords, self.domain, self.verdict)
-# 
-# class Claim_Keywords_Connections(Base):
-#     __tablename__ = "claim_keywords_connections"
-#     claim_id = Column(Unicode, primary_key=True, index=True)
-#     type = Column(Unicode, primary_key=True, index=True)
-#     keywords = Column(Unicode, default=None)
-#     score = Column(FLOAT, default=None)
-#     tweet_count = Column(Integer, default=None)
-# 
-# class RedditPostCommentConnection(Base):
-#     __tablename__ = "reddit_post_comment_connection"
-#     post_id = Column(Unicode, primary_key=True, index=True)
-#     comment_id = Column(Unicode, primary_key=True, index=True)
-# 
-# class RedditPost(Base):
-#     __tablename__ = 'reddit_posts'
-#     post_id = Column(Unicode, primary_key=True, index=True)
-#     guid = Column(Unicode, default=None)
-#     link_in_body = Column(Unicode, default=None)
-#     ups = Column(Integer, default=0)
-#     downs = Column(Integer, default=0)
-#     score = Column(Integer, default=0)
-#     upvote_ratio = Column(Integer, default=0)
-#     number_of_comments = Column(Integer, default=None)
-#     parent_id = Column(Unicode, default=None)
-#     stickied = Column(Boolean, default=False)
-#     is_submitter = Column(Boolean, default=False)
-#     distinguished = Column(Unicode, default=None)
-# 
-# class RedditAuthor(Base):
-#     __tablename__ = 'reddit_authors'
-# 
-#     name = Column(Unicode, primary_key=True)
-#     author_guid = Column(Unicode, primary_key=True)
-#     comments_count = Column(Integer,default=0)
-#     comment_karma = Column(Integer,default=0)
-#     link_karma = Column(Integer,default=0)
-#     is_gold = Column(Boolean, default=False)
-#     is_moderator = Column(Boolean, default=False)
-#     is_employee = Column(Boolean, default=False)
-# 
-# class InstagramPost(Base):
-#     __tablename__ = 'instagram_posts'
-#     id = Column(Unicode, primary_key=True)
-#     display_url = Column(Unicode, default=None)
-#     comments_disabled = Column(Boolean, default=None)
-#     likes = Column(Integer, default=None)
-#     # body = Column(Unicode, default=None)
-#     comment_count = Column(Integer, default=None)
-#     is_video = Column(Boolean, default=None)
-#     # owner_id = Column(Unicode, default=None)
-#     shortcode = Column(Unicode, default=None)
-#     # taken_at_timestamp = Column(Integer, default=None)
-#     thumbnail_resources = Column(Unicode, default=None)
-#     media_preview = Column(Unicode, default=None)
-#     gating_info = Column(Unicode, default=None)
-#     dimensions = Column(Unicode, default=None)
-#     instagram_typename = Column(Unicode, default=None)
-#     hashtag = Column(Unicode, default=None)
-# 
-# class InstagramAuthor(Base):
-#     __tablename__ = 'instagram_authors'
-#     id = Column(Unicode, primary_key=True)
-#     # username = Column(Unicode, default=None)
-#     # full_name = Column(Unicode, default=None)
-#     # biography = Column(Unicode, default=None)
-#     followers_count = Column(Integer, default=None)
-#     following_count = Column(Integer, default=None)
-#     posts_count = Column(Integer, default=None)
-#     is_business_account = Column(Boolean, default=None)
-#     is_joined_recently = Column(Boolean, default=None)
-#     is_private = Column(Boolean, default=None)
-#     # profile_pic_url = Column(Unicode, default=None)
-# 
-# class GooglePostKeywords(Base):
-#     __tablename__ = 'google_post_keywords'
-# 
-#     post_id = Column(Integer, primary_key=True)
-#     keywords = Column(Unicode, primary_key=True)
-#     insertion_date = Column(Unicode, default=None)
-# 
-# class NewsArticle(Base):
-#     __tablename__ = 'news_articles'
-# 
-#     article_id = Column(Unicode, ForeignKey('claims.claim_id', ondelete="CASCADE"), primary_key=True)
-#     author = Column(Unicode, default=None)
-#     published_date = Column(dt, default=None)
-#     domain = Column(Unicode, default=None)
-#     url = Column(Unicode, default=None)
-#     title = Column(Unicode, default=None)
-#     description = Column(Unicode, default=None)
-#     content = Column(Unicode, default=None)
-#     url_to_image = Column(Unicode, default=None)
-# 
-# 
-#     def __repr__(self):
-#         return "<TargetArticle(post_id='%s', author_guid='%s', author='%s', published_date='%s', url='%s', title='%s', description='%s', keywords='%s')>" % (
-#             self.post_id, self.author_guid, self.author, self.published_date, self.url, self.title, self.description, self.keywords)
-# 
-# 
-# class News_Article_Item(Base):
-#     __tablename__ = 'news_article_items'
-# 
-#     post_id = Column(Unicode, ForeignKey('posts.post_id', ondelete="CASCADE"), primary_key=True)
-#     author_guid = Column(Unicode, ForeignKey('posts.author_guid', ondelete="CASCADE"), primary_key=True)
-#     source_newsapi_internal_id = Column(Unicode, default=None)
-#     source_newsapi_internal_name = Column(Unicode, default=None)
-#     content = Column(Unicode, default=None)
-#     img_url = Column(Unicode, default=None)
-# 
-# 
-#     def __repr__(self):
-#         return "<Target_Article_Item(post_id='%s', author_guid='%s', source_newsapi_internal_id='%s', source_newsapi_internal_name='%s', content='%s', img_url='%s')>" % (
-#             self.post_id, self._author_guid, self.source_newsapi_internal_id, self.source_newsapi_internal_name, self.content, self.img_url)
-# 
-# 
 #
-class DB():
-    pass
+Base = declarative_base()
+
+
+class cor_table(Base):
+    __tablename__ = 'dataset_feature_correlation'
+    dataset_name = Column(Unicode, primary_key=True)
+    feature1 = Column(Unicode, primary_key=True)
+    feature2 = Column(Unicode, primary_key=True)
+    corr = Column(FLOAT, default=None)
+
+
+class DB(AbstractController):
+
+    def __init__(self):
+        pass
+
+    def setUp(self):
+        configInst = getConfig()
+        self._date = getConfig().eval(self.__class__.__name__, "start_date")
+        self._pathToEngine = configInst.get(self.__class__.__name__, "DB_path") + \
+                             configInst.get(self.__class__.__name__, "DB_name_prefix") + \
+                             configInst.get(self.__class__.__name__, "DB_name_suffix")
+
+        if configInst.eval(self.__class__.__name__, "remove_on_setup"):
+            self.deleteDB()
+
+        self.engine = create_engine("sqlite:///" + self._pathToEngine, echo=False)
+        self.Session = sessionmaker()
+        self.Session.configure(bind=self.engine)
+
+        self.session = self.Session()
+
+        self.posts = "posts"
+        self.authors = "authors"
+        self.author_features = "author_features"
+
+        @event.listens_for(self.engine, "connect")
+        def connect(dbapi_connection, connection_rec):
+            dbapi_connection.enable_load_extension(True)
+            dbapi_connection.execute(
+                'SELECT load_extension("{0}{1}")'.format(configInst.get("DB", "DB_path_to_extension"), '.dll'))
+
+            dbapi_connection.enable_load_extension(False)
+
+        if getConfig().eval(self.__class__.__name__, "dropall_on_setup"):
+            Base.metadata.drop_all(self.engine)
+
+        Base.metadata.create_all(self.engine)
+        pass
+
+    def execQuery(self, q):
+        query = text(q)
+        result = self.session.execute(query)
+        cursor = result.cursor
+        records = list(cursor.fetchall())
+        return records
+
+
 # class DB():
 #     '''
 #     Represents the primary blackboard of the system.
