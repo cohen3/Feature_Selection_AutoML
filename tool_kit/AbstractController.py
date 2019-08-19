@@ -1,8 +1,8 @@
 
 
 class AbstractController:
-    def __init__(self):
-        pass
+    def __init__(self, db):
+        self._db = db
 
     @property
     def _window_end(self):

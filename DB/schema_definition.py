@@ -97,6 +97,9 @@ class DB(AbstractController):
         Base.metadata.create_all(self.engine)
         pass
 
+    def commit(self):
+        self.session.commit()
+
     def execQuery(self, q):
         query = text(q)
         result = self.session.execute(query)
@@ -104,7 +107,28 @@ class DB(AbstractController):
         records = list(cursor.fetchall())
         return records
 
+    def create_table(self, create_table_sql):
+        """ create a table from the create_table_sql statement
+        :param conn: Connection object
+        :param create_table_sql: a CREATE TABLE statement
+        :return:
+        """
+        try:
+            self.session.execute(create_table_sql)
+        except:
+            pass
+    full_corr_graph = """CREATE TABLE IF NOT EXISTS full_corr_graph (
+                                    origin_data_file VARCHAR PRIMARY KEY,
+                                    feature1 VARCHAR NOT NULL,
+                                    feature2 VARCHAR NOT NULL,
+                                    correlation float NOT NULL,
+                                );"""
 
+    dataset_corr_graph = """CREATE TABLE IF NOT EXISTS file_corr_graph (
+                                    name VARCHAR PRIMARY KEY,
+                                    feature1 VARCHAR NOT NULL,
+                                    feature2 VARCHAR NOT NULL,
+                                );"""
 # class DB():
 #     '''
 #     Represents the primary blackboard of the system.

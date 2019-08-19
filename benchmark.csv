@@ -1,3 +1,9 @@
 time,jobnumber,config,window_size,window_start,dones,posts,authors,Test_Module,DB
 ,,configuration\config.ini,,setup,,,,5.4400000000009996e-05,0.01065480000000002
 ,,configuration\config.ini,,execute,,,,2.3006374835968018,0.0
+,,configuration\config.ini,,setup,,,,7.20000000000165e-05,0.011031199999999991
+,,configuration\config.ini,,execute,,,,0.0019996166229248047,0.0
+,,configuration\config.ini,,setup,,,,6.849999999999912e-05,0.010737600000000014
+,,configuration\config.ini,,execute,,,,1.4547677040100098,0.0
+,,configuration\config.ini,,setup,,,,3.600000000000825e-05,0.010631499999999988,3.7399999999992994e-05
+,,configuration\config.ini,,execute,,,,1.4545397758483887,0.0,0.0
