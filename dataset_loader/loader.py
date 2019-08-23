@@ -18,12 +18,13 @@ class data_loader(AbstractController):
     def setUp(self):
         self.data_files = [f for f in listdir(self.csv_data_path) if isfile(join(self.csv_data_path, f))]
 
+
     def execute(self, window_start):
 
         for file in self.data_files:
             df = pd.read_csv(file)
             columns = df.columns.value
-            corr_mat = df.corr(method=self.corr_method)
+            corr_mat = df.corr(method=self.corr_method) # check resemblane not correlation
             dataset_corr_graph = "CREATE TABLE IF NOT EXISTS "+str(os.path.basename)+"_corr_graph (name VARCHAR PRIMARY KEY,"
             for i in range(len(columns)):
                 dataset_corr_graph += "feature"+str(i)+" VARCHAR NOT NULL"
