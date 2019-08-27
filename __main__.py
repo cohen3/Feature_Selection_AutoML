@@ -7,10 +7,12 @@ from Test_Module.Test import Test_Module
 from DB.schema_definition import DB
 from configuration.configuration import getConfig
 from graph_generation.full_graph_generation import graph_generation
+from dataset_loader.loader import data_loader
 
 modules_dict = {}
 modules_dict["Test_Module"] = Test_Module
 modules_dict["DB"] = DB
+modules_dict['data_loader'] = data_loader
 modules_dict['graph_generation'] = graph_generation
 
 window_start = getConfig().eval("DEFAULT", "start_date")

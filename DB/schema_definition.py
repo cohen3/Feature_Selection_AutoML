@@ -79,10 +79,6 @@ class DB(AbstractController):
 
         self.session = self.Session()
 
-        self.posts = "posts"
-        self.authors = "authors"
-        self.author_features = "author_features"
-
         @event.listens_for(self.engine, "connect")
         def connect(dbapi_connection, connection_rec):
             dbapi_connection.enable_load_extension(True)
@@ -99,6 +95,10 @@ class DB(AbstractController):
 
     def commit(self):
         self.session.commit()
+
+    def df_to_table(self, df, name='mytable'):
+        df.to_sql(name, con=self.engine, if_exists='replace')
+        self.commit()
 
     def execQuery(self, q):
         query = text(q)
@@ -117,18 +117,18 @@ class DB(AbstractController):
             self.session.execute(create_table_sql)
         except:
             pass
-    full_corr_graph = """CREATE TABLE IF NOT EXISTS full_corr_graph (
-                                    origin_data_file VARCHAR PRIMARY KEY,
-                                    feature1 VARCHAR NOT NULL,
-                                    feature2 VARCHAR NOT NULL,
-                                    correlation float NOT NULL,
-                                );"""
-
-    dataset_corr_graph = """CREATE TABLE IF NOT EXISTS file_corr_graph (
-                                    name VARCHAR PRIMARY KEY,
-                                    feature1 VARCHAR NOT NULL,
-                                    feature2 VARCHAR NOT NULL,
-                                );"""
+    # full_corr_graph = """CREATE TABLE IF NOT EXISTS full_corr_graph (
+    #                                 origin_data_file VARCHAR PRIMARY KEY,
+    #                                 feature1 VARCHAR NOT NULL,
+    #                                 feature2 VARCHAR NOT NULL,
+    #                                 correlation float NOT NULL,
+    #                             );"""
+    #
+    # dataset_corr_graph = """CREATE TABLE IF NOT EXISTS file_corr_graph (
+    #                                 name VARCHAR PRIMARY KEY,
+    #                                 feature1 VARCHAR NOT NULL,
+    #                                 feature2 VARCHAR NOT NULL,
+    #                             );"""
 # class DB():
 #     '''
 #     Represents the primary blackboard of the system.
