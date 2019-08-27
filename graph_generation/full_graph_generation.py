@@ -25,8 +25,8 @@ class graph_generation(AbstractController):
     def execute(self, window_start):
         for corr_table in self.table_list:
             corr_matrix = self._db.execQuery('SELECT * FROM '+corr_table)
-            for row in corr_matrix:
-                print(row)
-                print(type(row))
-                print(len(row))
+            #for row in corr_matrix:
+               # print(row)
+               # print(type(row))
+               # print(len(row))
 

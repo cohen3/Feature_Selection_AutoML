@@ -115,3 +115,15 @@ time,jobnumber,config,window_size,window_start,dones,posts,authors,Test_Module,D
 ,,configuration\config.ini,,execute,,,,,0.0,0.5020139217376709,0.02600884437561035
 ,,configuration\config.ini,,setup,,,,,0.01523870000000005,5.6105294,0.004465600000000514
 ,,configuration\config.ini,,execute,,,,,0.0,0.5029654502868652,1.0819978713989258
+,,configuration\config.ini,,setup,,,,,0.0229147,7.7583803,0.005683799999999906
+,,configuration\config.ini,,execute,,,,,0.0,1.108365774154663,1.975769281387329
+,,configuration\config.ini,,setup,,,,,0.024055999999999998,6.6267904,0.005200600000000222
+,,configuration\config.ini,,execute,,,,,0.0,1.0489518642425537,0.21129131317138672
+,,configuration\config.ini,,setup,,,,,0.023911799999999997,111.221096,0.003952600000005191
+,,configuration\config.ini,,execute,,,,,0.0,0.5346126556396484,0.06882023811340332
+,,configuration\config.ini,,setup,,,,,0.0140355,56.3870124,0.004400199999999188
+,,configuration\config.ini,,execute,,,,,0.0,0.5686306953430176,0.06984567642211914
+,,configuration\config.ini,,setup,,,,,0.014116700000000001,56.6467793,0.004040299999999775
+,,configuration\config.ini,,execute,,,,,0.0,0.581334114074707,0.06934237480163574
+,,configuration\config.ini,,setup,,,,,0.0156178,59.974975099999995,0.004148699999994676
+,,configuration\config.ini,,execute,,,,,0.0,0.5891861915588379,0.10873126983642578
