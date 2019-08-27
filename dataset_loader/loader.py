@@ -7,7 +7,7 @@ import numpy as np
 from configuration.configuration import getConfig
 from tool_kit.AbstractController import AbstractController
 from tool_kit.colors import bcolors
-
+import dataset_loader.corr_calc
 
 class data_loader(AbstractController):
 
@@ -15,7 +15,7 @@ class data_loader(AbstractController):
         AbstractController.__init__(self, db)
         self.db = db
         self.csv_data_path = getConfig().eval(self.__class__.__name__, "csv_data_path")
-        self.corr_method = getConfig().eval(self.__class__.__name__, "corr_method")
+        self.corr_method = getConfig().eval(self.__class__.__name__, "corr_function")
         self.data_files = [f for f in listdir(self.csv_data_path) if isfile(join(self.csv_data_path, f))]
         self.corr_mat = {}
 
@@ -24,7 +24,8 @@ class data_loader(AbstractController):
             df = pd.read_csv(join(self.csv_data_path, file))
             df = self.preprocess(df)
             # TODO: data overfitting? drop irrelevant columns like IDs, names, etc
-            self.corr_mat[str(os.path.splitext(file)[0])+'_corr_graph'] = df.corr(method=self.corr_method)
+            method_to_call = getattr(dataset_loader.corr_calc,self.corr_method)
+            self.corr_mat[str(os.path.splitext(file)[0])+'_corr_graph'] = method_to_call(df)
             # builtin {‘pearson’, ‘kendall’, ‘spearman’}
             # dataset_corr_graph = "CREATE TABLE IF NOT EXISTS " + str(os.path.splitext(file)[0]) \
             #                      + "_corr_graph (name VARCHAR PRIMARY KEY"
