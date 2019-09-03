@@ -115,3 +115,7 @@ time,jobnumber,config,window_size,window_start,dones,posts,authors,Test_Module,D
 ,,configuration\config.ini,,execute,,,,,0.0,0.5020139217376709,0.02600884437561035
 ,,configuration\config.ini,,setup,,,,,0.01523870000000005,5.6105294,0.004465600000000514
 ,,configuration\config.ini,,execute,,,,,0.0,0.5029654502868652,1.0819978713989258
+,,configuration\config.ini,,setup,,,,,0.0680537000000001,5.281570199999999,0.005031699999999972
+,,configuration\config.ini,,execute,,,,,0.0,0.4839904308319092,1.1233599185943604
+,,configuration\config.ini,,setup,,,,,0.0134185,5.3936187,0.006398899999999763
+,,configuration\config.ini,,execute,,,,,0.0,0.4970378875732422,0.11098957061767578
