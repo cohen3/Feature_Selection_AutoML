@@ -18,6 +18,8 @@ class graph_generation(AbstractController):
         self.table_list = [t[0] for t in self.table_list]
         if self.dataset_table in self.table_list:
             self.table_list.remove(self.dataset_table)
+        if "target_features" in self.table_list:
+            self.table_list.remove("target_features")
 
         # dataset_corr_graph = "CREATE TABLE IF NOT EXISTS full_corr_graph" + \
         #                      " (file VARCHAR PRIMARY KEY," + \
@@ -51,10 +53,13 @@ class graph_generation(AbstractController):
         for corr_table in self.table_list:
             corr_matrix = self._db.execQuery('SELECT * FROM ' + corr_table)
             features_in_dataset = [i[0] for i in corr_matrix]
+            target = self.db.execQuery("SELECT target_feature FROM target_features WHERE dataset_name=\'"
+                                       + corr_table+"\'")[0][0]
+            print(target)
             for row_index, row in enumerate(corr_matrix):
                 feature1 = row[0]
                 for index, f in enumerate(features_in_dataset, start=1):
-                    if feature1 == f:
+                    if feature1 == f or feature1 == target or f == target:
                         continue
                     data_dict['dataset_name'].append(corr_table)
                     data_dict['feature1'].append(feature1)

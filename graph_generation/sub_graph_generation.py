@@ -18,6 +18,10 @@ class sub_graph_generator(AbstractController):
         print('read from full graph:')
         datasets = self.db.execQuery('SELECT DISTINCT dataset_name FROM '+self.dataset_table)
         print("data sets: {}".format([i[0] for i in datasets]))
-        datasets = self.db.execQuery('SELECT COUNT(*) FROM ' + self.dataset_table)
-        print("size of full graph: {}".format(datasets[0][0]))
+
+        for data in datasets:
+            full_graph = self.db.execQuery('SELECT * FROM '+self.dataset_table+' WHERE dataset_name=\''+data[0]+'\'')
+            for row in full_graph:
+                print(row)
+
 
