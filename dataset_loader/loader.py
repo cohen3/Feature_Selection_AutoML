@@ -45,8 +45,6 @@ class data_loader(AbstractController):
 
     def execute(self, window_start):
         for name, file_corr_mat in self.corr_mat.items():
-            print(file_corr_mat)
-            print(type(file_corr_mat))
             self.db.df_to_table(file_corr_mat, name)
 
 
