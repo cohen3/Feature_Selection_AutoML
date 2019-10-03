@@ -44,6 +44,6 @@ class graph_generation(AbstractController):
                     data_dict['dataset_name'].append(corr_table)
                     data_dict['feature1'].append(feature1)
                     data_dict['feature2'].append(f)
-                    data_dict['corr'].append(abs(float(corr_matrix[row_index][index])))
+                    data_dict['corr'].append(float(corr_matrix[row_index][index]))
         full_graph = pd.DataFrame.from_dict(data_dict)
         self.db.df_to_table(full_graph, self.dataset_table)
