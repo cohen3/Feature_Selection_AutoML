@@ -55,7 +55,7 @@ class sub_graph_generator(AbstractController):
                     """
                 self.plot_graph(graph)
                 self.print_graph_features(graph)
-                nx.write_gpickle(graph, 'data/sub_graphs/graph_'+str(graph_id)+'.gpickle')
+                nx.write_gpickle(graph, 'data/sub_graphs/'+data[0]+'_subgraph'+str(graph_id)+'.gpickle')
                 graph_id += 1
 
     def plot_graph(self, graph):

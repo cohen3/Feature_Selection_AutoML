@@ -1,6 +1,10 @@
 import time
+from os import walk, listdir
+from os.path import isfile
 
 import xgboost as xgb
+import networkx as nx
+import matplotlib.pyplot as plt
 from configuration.configuration import getConfig
 from tool_kit.AbstractController import AbstractController
 from tool_kit.colors import bcolors
@@ -22,7 +26,14 @@ class xgboost_generator(AbstractController):
         self.exclude_table_list = getConfig().eval(self.__class__.__name__, "exclude_table_list")
 
     def execute(self, window_start):
-        pass
+
+        for file in listdir('data/sub_graphs'):
+            print('\n'+file)
+            dataset = file.split("_corr_graph")[0]
+            print(bcolors.OKBLUE+"Dataset: "+dataset+bcolors.ENDC)
+            graph = nx.read_gpickle('data/sub_graphs/'+file)
+            self.print_graph_features(graph)
+            self.plot_graph(graph)
 
     def __fit(self, target_name):
         train_df = None  # TODO: replace this with actual pandas DataFrame
@@ -46,3 +57,43 @@ class xgboost_generator(AbstractController):
         pred_df = bst.predict(test_df)
         print(pred_df.show())
         return {'acc': 0, 'aucpr': 0, 'train_time': (end - start)}
+
+    def plot_graph(self, graph):
+        elarge = [(u, v) for (u, v, d) in graph.edges(data=True) if d['weight'] > 0.8]
+        esmall = [(u, v) for (u, v, d) in graph.edges(data=True) if d['weight'] <= 0.8]
+
+        pos = nx.spring_layout(graph)  # positions for all nodes
+        # nodes
+        nx.draw_networkx_nodes(graph, pos, node_size=20)
+        # edges
+        nx.draw_networkx_edges(graph, pos, edgelist=elarge,
+                               width=1, style='dashed')
+        nx.draw_networkx_edges(graph, pos, edgelist=esmall,
+                               width=1, alpha=0.5, edge_color='b', style='dashed')
+        # labels
+        # nx.draw_networkx_labels(graph, pos, font_size=4, font_family='sans-serif')
+        plt.axis('off')
+        plt.show()
+
+    def print_graph_features(self, graph):
+        # for node in graph.nodes:
+        #     print('Node: ', node)
+        # for edges in graph.edges:
+        #     print('edges: ', edges)
+        # for e in nx.non_edges(graph):
+        #     print(e)
+        try:
+            print('diameter: ', nx.diameter(graph))
+            print('eccentricity: ', nx.eccentricity(graph))
+            print('center: ', nx.center(graph))
+            print('periphery: ', nx.periphery(graph))
+        except Exception as e:
+            print('Graph not connected')
+        print('density: ', nx.density(graph))
+        # print('degree: ', nx.degree(graph))
+        print('Average degree: ', sum([i[1] for i in nx.degree(graph)]) / len(nx.degree(graph)))
+        print('edges: ', len(graph.edges))
+        print('Nodes: ', len(graph.nodes))
+        print('self loops: ', len(list(nx.nodes_with_selfloops(graph))))
+        print('edges to nodes ratio: ', len(graph.nodes) / len(graph.edges))
+        print('negative edges: ', nx.is_negatively_weighted(graph))
