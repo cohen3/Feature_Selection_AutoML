@@ -96,8 +96,8 @@ class DB(AbstractController):
     def commit(self):
         self.session.commit()
 
-    def df_to_table(self, df, name='mytable'):
-        df.to_sql(name, con=self.engine, if_exists='replace')
+    def df_to_table(self, df, name='mytable', mode='append'):
+        df.to_sql(name, con=self.engine, if_exists=mode)
         self.commit()
 
     def execQuery(self, q):

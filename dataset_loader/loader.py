@@ -49,8 +49,8 @@ class data_loader(AbstractController):
 
     def execute(self, window_start):
         for name, file_corr_mat in self.corr_mat.items():
-            self.db.df_to_table(file_corr_mat, name)
+            self.db.df_to_table(df=file_corr_mat, name=name, mode='replace')
         df = pd.DataFrame(self.targets)
-        self.db.df_to_table(df, "target_features")
+        self.db.df_to_table(df=df, name="target_features", mode='replace')
 
 

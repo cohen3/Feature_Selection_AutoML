@@ -53,8 +53,6 @@ class sub_graph_generator(AbstractController):
                             for e in nx.non_edges(graph):
                                 graph.add_edge(e[0], e[1], weight=0)
                     """
-                self.plot_graph(graph)
-                self.print_graph_features(graph)
                 nx.write_gpickle(graph, 'data/sub_graphs/'+data[0]+'_subgraph'+str(graph_id)+'.gpickle')
                 graph_id += 1
 
@@ -74,26 +72,3 @@ class sub_graph_generator(AbstractController):
         # nx.draw_networkx_labels(graph, pos, font_size=4, font_family='sans-serif')
         plt.axis('off')
         plt.show()
-
-    def print_graph_features(self, graph):
-        # for node in graph.nodes:
-        #     print('Node: ', node)
-        # for edges in graph.edges:
-        #     print('edges: ', edges)
-        # for e in nx.non_edges(graph):
-        #     print(e)
-        try:
-            print('diameter: ', nx.diameter(graph))
-            print('eccentricity: ', nx.eccentricity(graph))
-            print('center: ', nx.center(graph))
-            print('periphery: ', nx.periphery(graph))
-        except Exception as e:
-            print('Graph not connected')
-        print('density: ', nx.density(graph))
-        # print('degree: ', nx.degree(graph))
-        print('Average degree: ', sum([i[1] for i in nx.degree(graph)]) / len(nx.degree(graph)))
-        print('edges: ', len(graph.edges))
-        print('Nodes: ', len(graph.nodes))
-        print('self loops: ', len(list(nx.nodes_with_selfloops(graph))))
-        print('edges to nodes ratio: ', len(graph.nodes) / len(graph.edges))
-        print('negative edges: ', nx.is_negatively_weighted(graph))

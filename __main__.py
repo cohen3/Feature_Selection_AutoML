@@ -12,7 +12,6 @@ from graph_generation.sub_graph_generation import sub_graph_generator
 from dataset_generation.xgboost_dataset_generator import xgboost_generator
 
 modules_dict = {}
-modules_dict["Test_Module"] = Test_Module
 modules_dict["DB"] = DB
 modules_dict['data_loader'] = data_loader
 modules_dict['graph_generation'] = graph_generation
