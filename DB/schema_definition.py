@@ -97,6 +97,14 @@ class DB(AbstractController):
         self.session.commit()
 
     def df_to_table(self, df, name='mytable', mode='append'):
+        """
+        This method writes a dataframe to the database, the mode and name of the table can be modified.
+
+        :param df: dataframe to write
+        :param name: the name of the table
+        :param mode: {'fail', 'replace', 'append'}
+        :return: None
+        """
         df.to_sql(name, con=self.engine, if_exists=mode)
         self.commit()
 

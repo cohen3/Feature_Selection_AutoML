@@ -25,11 +25,12 @@ class sub_graph_generator(AbstractController):
         print("data sets: {}".format([i[0] for i in datasets]))
         graph_id = 1
         for data in datasets:
+            print(bcolors.BOLD + bcolors.UNDERLINE + bcolors.OKBLUE + 'Dataset: ' + data[0]
+                  + bcolors.ENDC + bcolors.ENDC + bcolors.ENDC)
             full_graph = self.db.execQuery(
                 'SELECT * FROM ' + self.dataset_table + ' WHERE dataset_name=\'' + data[0] + '\'')
             max_vertexes = int(len(full_graph) * self.vertex_threshold)
             for g in range(self.num_of_subgraphs):
-                print(g)
                 egdes = {}
                 i = 0
                 graph = nx.Graph()
@@ -53,7 +54,7 @@ class sub_graph_generator(AbstractController):
                             for e in nx.non_edges(graph):
                                 graph.add_edge(e[0], e[1], weight=0)
                     """
-                nx.write_gpickle(graph, 'data/sub_graphs/'+data[0]+'_subgraph'+str(graph_id)+'.gpickle')
+                nx.write_gpickle(graph, 'data/sub_graphs/' + data[0] + '_subgraph' + str(graph_id) + '.gpickle')
                 graph_id += 1
 
     def plot_graph(self, graph):

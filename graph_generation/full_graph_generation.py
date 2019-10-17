@@ -35,7 +35,7 @@ class graph_generation(AbstractController):
             features_in_dataset = [i[0] for i in corr_matrix]
             target = self.db.execQuery("SELECT target_feature FROM target_features WHERE dataset_name=\'"
                                        + corr_table+"\'")[0][0]
-            print(target)
+            print(bcolors.UNDERLINE+bcolors.RED+corr_table+' Target :'+bcolors.ENDC+' '+target+bcolors.ENDC)
             for row_index, row in enumerate(corr_matrix):
                 feature1 = row[0]
                 for index, f in enumerate(features_in_dataset, start=1):

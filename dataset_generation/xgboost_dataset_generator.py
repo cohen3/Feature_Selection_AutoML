@@ -7,8 +7,9 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import pandas as pd
 import pandasql as ps
-from sklearn.metrics import precision_score, recall_score, roc_curve, auc, accuracy_score
+from sklearn.metrics import precision_score, recall_score, roc_curve, auc, accuracy_score, classification_report
 from sklearn.model_selection import train_test_split
+import math
 
 from configuration.configuration import getConfig
 from tool_kit.AbstractController import AbstractController
@@ -67,8 +68,11 @@ class xgboost_generator(AbstractController):
         # read number of classes into dictionary
         if dataset_name not in self.num_class:
             q1 = "SELECT COUNT(DISTINCT "+target_feature+") as num FROM df "
+            q2 = "SELECT DISTINCT "+target_feature+" as classes FROM df "
             num = ps.sqldf(q1, locals())
+            classes = ps.sqldf(q2, locals())
             self.num_class[dataset_name] = int(num.iloc[0]['num'])
+            self.labels = ['{}'.format(i) for i in list(classes['classes'].values)]
 
         return X_train, X_test, y_train, y_test, self.num_class[dataset_name]
 
@@ -89,19 +93,25 @@ class xgboost_generator(AbstractController):
 
         # training
         start = time.perf_counter()
+        print(bcolors.GREY)
         bst = xgb.train(param, dtrain, self.epochs, evallist)
+        print(bcolors.ENDC)
         end = time.perf_counter()
 
         # record performances
-        res = self.get_performances(bst, dtest, y_test, y_test.values)
+        # if num + 1 <= 2:
+        #     res = self.get_performances(bst, dtest, y_test, y_test.values)
+        # else:
+        #     res = self.get_performances_multiclass(bst, dtest, y_test, None)
+        res = self.get_performances_multiclass(bst, dtest, y_test, (num + 1 <= 2))
         print("Training time: {:.3f} sec".format(end-start))
         res['train_time'] = '{:.3f}'.format(end - start)
         return res
 
-    def get_performances(self, model, test_df, Y, labels):
+    def get_performances(self, model, X_test, Y, labels):
         # TODO: make compatible with multiclass
         res = {}
-        preds = model.predict(test_df)
+        preds = model.predict(X_test)
 
         check2 = preds.round()
         score = precision_score(labels, check2)
@@ -126,6 +136,17 @@ class xgboost_generator(AbstractController):
         accuracy = accuracy_score(Y, predictions)
         print("Accuracy: {:.6f}".format(accuracy))
         res['Accuracy'] = '{:.6f}'.format(accuracy)
+        return res
+
+    def get_performances_multiclass(self, model, X_test, y_test, binary):
+
+        res = {}
+        y_pred = model.predict(X_test)
+        y_pred = [float(i) for i in list(y_pred)]
+        y_test_list = [i for i in list(y_test.values)]
+        if binary:
+            y_pred = [math.floor(i) if i < 0.5 else 1 for i in y_pred]
+        res = classification_report(y_test_list, y_pred, target_names=self.labels, output_dict=True)
         return res
 
     def plot_graph(self, graph):
