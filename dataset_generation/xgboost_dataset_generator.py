@@ -4,6 +4,7 @@ from os.path import isfile
 
 import xgboost as xgb
 import networkx as nx
+import networkx.algorithms.approximation as algo
 import matplotlib.pyplot as plt
 import pandas as pd
 import pandasql as ps
@@ -99,16 +100,15 @@ class xgboost_generator(AbstractController):
         end = time.perf_counter()
 
         # record performances
-        # if num + 1 <= 2:
-        #     res = self.get_performances(bst, dtest, y_test, y_test.values)
-        # else:
-        #     res = self.get_performances_multiclass(bst, dtest, y_test, None)
         res = self.get_performances_multiclass(bst, dtest, y_test, (num + 1 <= 2))
         print("Training time: {:.3f} sec".format(end-start))
         res['train_time'] = '{:.3f}'.format(end - start)
         return res
 
     def get_performances(self, model, X_test, Y, labels):
+        """
+        This method is for binary class only
+        """
         # TODO: make compatible with multiclass
         res = {}
         preds = model.predict(X_test)
@@ -139,13 +139,12 @@ class xgboost_generator(AbstractController):
         return res
 
     def get_performances_multiclass(self, model, X_test, y_test, binary):
-
-        res = {}
         y_pred = model.predict(X_test)
         y_pred = [float(i) for i in list(y_pred)]
         y_test_list = [i for i in list(y_test.values)]
         if binary:
             y_pred = [math.floor(i) if i < 0.5 else 1 for i in y_pred]
+        print(classification_report(y_test_list, y_pred, target_names=self.labels))
         res = classification_report(y_test_list, y_pred, target_names=self.labels, output_dict=True)
         return res
 
@@ -187,7 +186,7 @@ class xgboost_generator(AbstractController):
         res['self_loops'] = len(list(nx.nodes_with_selfloops(graph)))
         res['edge_to_node_ratio'] = '{:.6f}'.format(len(graph.nodes) / len(graph.edges))
         res['negative_edges'] = nx.is_negatively_weighted(graph)
-
+        print(algo.max_clique(graph))
         # print('density: ', res['density'])
         # print('Average degree: ', res['Avg_degree'])
         # print('Average weight: ', res['Avg_weight'])

@@ -1,3 +1,5 @@
+import os
+
 from configuration.configuration import getConfig
 from tool_kit.AbstractController import AbstractController
 from tool_kit.colors import bcolors
@@ -18,8 +20,14 @@ class sub_graph_generator(AbstractController):
         self.vertex_threshold = getConfig().eval(self.__class__.__name__, "vertex_threshold")
         self.dataset_table = getConfig().eval(self.__class__.__name__, "dataset_table")
         self.num_of_subgraphs = getConfig().eval(self.__class__.__name__, "num_of_subgraphs_each")
+        self.clear_existing_subgraphs = getConfig().eval(self.__class__.__name__, "clear_existing_subgraphs")
 
     def execute(self, window_start):
+        # clear old gpickle graph files
+        if self.clear_existing_subgraphs:
+            self.clear_graphs()
+
+        # execute random walk
         print('read from full graph:')
         datasets = self.db.execQuery('SELECT DISTINCT dataset_name FROM ' + self.dataset_table)
         print("data sets: {}".format([i[0] for i in datasets]))
@@ -29,7 +37,10 @@ class sub_graph_generator(AbstractController):
                   + bcolors.ENDC + bcolors.ENDC + bcolors.ENDC)
             full_graph = self.db.execQuery(
                 'SELECT * FROM ' + self.dataset_table + ' WHERE dataset_name=\'' + data[0] + '\'')
+            # calculate number of max vertexes
             max_vertexes = int(len(full_graph) * self.vertex_threshold)
+
+            # generate as many sub graphs as indicated in the config file
             for g in range(self.num_of_subgraphs):
                 egdes = {}
                 i = 0
@@ -56,6 +67,11 @@ class sub_graph_generator(AbstractController):
                     """
                 nx.write_gpickle(graph, 'data/sub_graphs/' + data[0] + '_subgraph' + str(graph_id) + '.gpickle')
                 graph_id += 1
+
+    def clear_graphs(self):
+        filelist = [f for f in os.listdir('data/sub_graphs') if f.endswith(".gpickle")]
+        for f in filelist:
+            os.remove(os.path.join('data/sub_graphs', f))
 
     def plot_graph(self, graph):
         elarge = [(u, v) for (u, v, d) in graph.edges(data=True) if d['weight'] > 0.8]
