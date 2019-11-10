@@ -50,13 +50,6 @@ from datetime import datetime, timedelta
 Base = declarative_base()
 
 
-class cor_table(Base):
-    __tablename__ = 'dataset_feature_correlation'
-    dataset_name = Column(Unicode, primary_key=True)
-    feature1 = Column(Unicode, primary_key=True)
-    feature2 = Column(Unicode, primary_key=True)
-    corr = Column(FLOAT, default=None)
-
 
 class DB(AbstractController):
 
@@ -65,11 +58,11 @@ class DB(AbstractController):
 
     def setUp(self):
         configInst = getConfig()
+        self.is_csv = configInst.eval(self.__class__.__name__, "is_csv")
         self._date = getConfig().eval(self.__class__.__name__, "start_date")
         self._pathToEngine = configInst.get(self.__class__.__name__, "DB_path") + \
                              configInst.get(self.__class__.__name__, "DB_name_prefix") + \
                              configInst.get(self.__class__.__name__, "DB_name_suffix")
-
         if configInst.eval(self.__class__.__name__, "remove_on_setup"):
             self.deleteDB()
 
@@ -98,6 +91,7 @@ class DB(AbstractController):
 
     def df_to_table(self, df, name='mytable', mode='append'):
         """
+
         This method writes a dataframe to the database, the mode and name of the table can be modified.
 
         :param df: dataframe to write
@@ -106,6 +100,7 @@ class DB(AbstractController):
         :return: None
         """
         df.to_sql(name, con=self.engine, if_exists=mode)
+
         self.commit()
 
     def execQuery(self, q):

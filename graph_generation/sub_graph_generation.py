@@ -4,6 +4,7 @@ from configuration.configuration import getConfig
 from tool_kit.AbstractController import AbstractController
 from tool_kit.colors import bcolors
 
+import pandas as pd
 import matplotlib.pyplot as plt
 import networkx as nx
 import random as rnd
@@ -29,14 +30,22 @@ class sub_graph_generator(AbstractController):
 
         # execute random walk
         print('read from full graph:')
-        datasets = self.db.execQuery('SELECT DISTINCT dataset_name FROM ' + self.dataset_table)
-        print("data sets: {}".format([i[0] for i in datasets]))
+        if self.db.is_csv:
+            datasets = pd.read_csv('data/dataset_out/target_features.csv')['dataset_name'].tolist()
+        else:
+            datasets = self.db.execQuery('SELECT DISTINCT dataset_name FROM ' + self.dataset_table)
+            datasets = [i[0] for i in datasets]
+        print("data sets: {}".format([i for i in datasets]))
         graph_id = 1
         for data in datasets:
-            print(bcolors.BOLD + bcolors.UNDERLINE + bcolors.OKBLUE + 'Dataset: ' + data[0]
+            print(bcolors.BOLD + bcolors.UNDERLINE + bcolors.OKBLUE + 'Dataset: ' + data
                   + bcolors.ENDC + bcolors.ENDC + bcolors.ENDC)
-            full_graph = self.db.execQuery(
-                'SELECT * FROM ' + self.dataset_table + ' WHERE dataset_name=\'' + data[0] + '\'')
+            if self.db.is_csv:
+                full_graph = pd.read_csv('data/dataset_out/dataset_feature_correlation.csv')
+                full_graph = full_graph.loc[full_graph['dataset_name'] == data+".csv"].values.tolist()
+            else:
+                full_graph = self.db.execQuery(
+                    'SELECT * FROM ' + self.dataset_table + ' WHERE dataset_name=\'' + data + '\'')
             # calculate number of max vertexes
             max_vertexes = int(len(full_graph) * self.vertex_threshold)
 
@@ -55,9 +64,14 @@ class sub_graph_generator(AbstractController):
                     if n in egdes:
                         continue
                     egdes[n] = True
-                    if abs(float(row[4])) >= self.corr_threshold:
-                        graph.add_edge(row[2], row[3], weight=float(row[4]))
-                        i += 1
+                    if self.db.is_csv:
+                        if abs(float(row[3])) >= self.corr_threshold:
+                            graph.add_edge(row[1], row[2], weight=float(row[3]))
+                            i += 1
+                    else:
+                        if abs(float(row[4])) >= self.corr_threshold:
+                            graph.add_edge(row[2], row[3], weight=float(row[4]))
+                            i += 1
                     # TODO: perform the random walk
                     # TODO: dont allow empty graphs
                     # TODO: should we connect non connected nodes with weight 0 o make the graph connected?
@@ -65,8 +79,15 @@ class sub_graph_generator(AbstractController):
                             for e in nx.non_edges(graph):
                                 graph.add_edge(e[0], e[1], weight=0)
                     """
-                nx.write_gpickle(graph, 'data/sub_graphs/' + data[0] + '_subgraph' + str(graph_id) + '.gpickle')
+                nx.write_gpickle(graph, 'data/sub_graphs/' + data + '_subgraph' + str(graph_id) + '.gpickle')
                 graph_id += 1
+
+    # def random_graph_generator(self):
+    #     graph = nx.Graph()
+    #     graph_size = 10
+    #     for idx in range(self.num_of_subgraphs):
+    #         while()
+
 
     def clear_graphs(self):
         filelist = [f for f in os.listdir('data/sub_graphs') if f.endswith(".gpickle")]
