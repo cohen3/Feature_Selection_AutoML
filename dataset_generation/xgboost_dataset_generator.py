@@ -42,11 +42,11 @@ class xgboost_generator(AbstractController):
             dataset = file.split("_corr_graph")[0]
             print(bcolors.OKBLUE + "Dataset: " + dataset + bcolors.ENDC)
             graph = nx.read_gpickle('data/sub_graphs/' + file)
-            graph_features = self.print_graph_features(graph)
+            # graph_features = self.print_graph_features(graph)
             # self.plot_graph(graph)
             X_train, X_test, y_train, y_test, num = self.prepare_dataset(dataset, graph)
             res = self.__fit(X_train, X_test, y_train, y_test, self.num_class[dataset])
-            self.commit_results(graph_features, res)
+            # self.commit_results(graph_features, res)
 
     def prepare_dataset(self, dataset_name='', graph=None):
 
@@ -112,7 +112,6 @@ class xgboost_generator(AbstractController):
         # training
         start = time.perf_counter()
         print(bcolors.GREY)
-        print("waaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
         print(dtrain.get_label())
         bst = xgb.train(param, dtrain, self.epochs, evallist)
         print(bcolors.ENDC)
@@ -157,6 +156,7 @@ class xgboost_generator(AbstractController):
         res['Accuracy'] = '{:.6f}'.format(accuracy)
         return res
 
+    # TODO: rami and aviad said different things, which accuracy should we take?
     def get_performances_multiclass(self, model, X_test, y_test, binary):
         y_pred = model.predict(X_test)
         y_pred = [float(i) for i in list(y_pred)]

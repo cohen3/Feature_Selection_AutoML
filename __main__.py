@@ -8,7 +8,7 @@ from Test_Module.Test import Test_Module
 from configuration.configuration import getConfig
 from dataset_loader.loader import data_loader
 from graph_generation.full_graph_generation import graph_generation
-from graph_generation.sub_graph_generation import sub_graph_generator
+from graph_generation.sub_graph_generation_random_walk import sub_graph_generator
 from graph_generation.graph_feature_extraction import graph_feature_extraction
 from dataset_generation.xgboost_dataset_generator import xgboost_generator
 from DB.csv_db import CSV_DB
