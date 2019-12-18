@@ -18,15 +18,17 @@ class data_loader(AbstractController):
         self.corr_method = getConfig().eval(self.__class__.__name__, "corr_function")
         self.data_files = [f for f in listdir(self.csv_data_path) if isfile(join(self.csv_data_path, f))]
         self.corr_mat = {}
-        self.targets = {"dataset_name":[], "target_feature":[]}
+        self.targets = {"dataset_name": [], "target_feature": []}
 
     def setUp(self):
         for file in self.data_files:
             df = pd.read_csv(join(self.csv_data_path, file))
             df = self.preprocess(df)
             # TODO: data overfitting? drop irrelevant columns like IDs, names, etc
-            method_to_call = getattr(dataset_loader.corr_calc,self.corr_method)
+            method_to_call = getattr(dataset_loader.corr_calc, self.corr_method)
+            # creates a full graph (corr matrix)
             self.corr_mat[str(os.path.splitext(file)[0])+'_corr_graph'] = method_to_call(df)
+            # TODO: add TMFG or PMFG to extract full graph
             self.targets["dataset_name"].append(str(os.path.splitext(file)[0])+'_corr_graph')
             self.targets["target_feature"].append(df.columns[-1])
             print(os.path.splitext(file)[0]+'_corr_graph' + df.columns[-1])
@@ -49,6 +51,7 @@ class data_loader(AbstractController):
 
     def execute(self, window_start):
         for name, file_corr_mat in self.corr_mat.items():
+            # each is a full graph (corr matrix)
             self.db.df_to_table(df=file_corr_mat, name=name, mode='replace')
         df = pd.DataFrame(self.targets)
         self.db.df_to_table(df=df, name="target_features", mode='replace')

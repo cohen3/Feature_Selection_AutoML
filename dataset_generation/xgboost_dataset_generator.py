@@ -1,7 +1,7 @@
 import time
 from os import walk, listdir
 from os.path import isfile
-
+import csv
 import xgboost as xgb
 import networkx as nx
 import networkx.algorithms.approximation as algo
@@ -33,6 +33,7 @@ class xgboost_generator(AbstractController):
         self.epochs = getConfig().eval(self.__class__.__name__, "epochs")
         self.dataset = getConfig().eval(self.__class__.__name__, "dataset")
         self.exclude_table_list = getConfig().eval(self.__class__.__name__, "exclude_table_list")
+        self.labels = []
 
     def execute(self, window_start):
 
@@ -41,40 +42,56 @@ class xgboost_generator(AbstractController):
             dataset = file.split("_corr_graph")[0]
             print(bcolors.OKBLUE + "Dataset: " + dataset + bcolors.ENDC)
             graph = nx.read_gpickle('data/sub_graphs/' + file)
-            graph_features = self.print_graph_features(graph)
+            # graph_features = self.print_graph_features(graph)
             # self.plot_graph(graph)
             X_train, X_test, y_train, y_test, num = self.prepare_dataset(dataset, graph)
             res = self.__fit(X_train, X_test, y_train, y_test, self.num_class[dataset])
-            self.commit_results(graph_features, res)
+            # self.commit_results(graph_features, res)
 
     def prepare_dataset(self, dataset_name='', graph=None):
 
         # extracting feature names from graph
         features = [node for node in graph.nodes]
-
         # reading the dataset into pandas df
         df = pd.read_csv('data/dataset_in/' + dataset_name + ".csv")
-
         # get the dataset's target
-        target_feature = self.db.execQuery("SELECT target_feature FROM target_features WHERE dataset_name=\'"
-                                           + dataset_name + "_corr_graph\'")[0][0]
+        self.labels = []
+        if self.db.is_csv:
+            with open('data/dataset_out/target_features.csv', newline='') as csv_file:
+                csv_reader = csv.reader(csv_file, delimiter=',')
+                for row in csv_reader:
+                    if row[0] == dataset_name+"_corr_graph":
+                        target_feature = row[1]
+            self.labels = set(df[target_feature].tolist())
+            #self.labels.remove(self.labels[0])
+            print("dataset_name is {} and num_class is {}".format(dataset_name,  len(self.labels)))
+            print(self.labels)
+            self.num_class[dataset_name] = len(self.labels)
+        else:
+            target_feature = self.db.execQuery("SELECT target_feature FROM target_features WHERE dataset_name=\'"
+                                               + dataset_name + "_corr_graph\'")[0][0]
 
         # convert categorical to numeric
-        if df[target_feature].dtype != 'float64' and df[target_feature].dtype != 'int64':
-            df[target_feature] = df[target_feature].astype('category').cat.codes
-
+        if self.db.is_csv:
+            if type(df[target_feature]) != 'float64' and type(df[target_feature].dtype) != 'int64':
+                df[target_feature] = df[target_feature].astype('category').cat.codes
+        else:
+            if df[target_feature].dtype != 'float64' and df[target_feature].dtype != 'int64':
+                df[target_feature] = df[target_feature].astype('category').cat.codes
         # split data to test and train
         X_train, X_test, y_train, y_test = train_test_split(df[features], df[target_feature],
                                                             test_size=0.15, random_state=2)
         # read number of classes into dictionary
         if dataset_name not in self.num_class:
-            q1 = "SELECT COUNT(DISTINCT "+target_feature+") as num FROM df "
-            q2 = "SELECT DISTINCT "+target_feature+" as classes FROM df "
-            num = ps.sqldf(q1, locals())
-            classes = ps.sqldf(q2, locals())
-            self.num_class[dataset_name] = int(num.iloc[0]['num'])
-            self.labels = ['{}'.format(i) for i in list(classes['classes'].values)]
-
+            if not self.db.is_csv:
+                q1 = "SELECT COUNT(DISTINCT "+target_feature+") as num FROM df "
+                q2 = "SELECT DISTINCT "+target_feature+" as classes FROM df "
+                num = ps.sqldf(q1, locals())
+                classes = ps.sqldf(q2, locals())
+                self.labels = ['{}'.format(i) for i in list(classes['classes'].values)]
+        print(type(self.num_class))
+        print(self.num_class)
+        print(dataset_name)
         return X_train, X_test, y_train, y_test, self.num_class[dataset_name]
 
     def __fit(self, X_train, X_test, Y_train, y_test, num):
@@ -95,6 +112,7 @@ class xgboost_generator(AbstractController):
         # training
         start = time.perf_counter()
         print(bcolors.GREY)
+        print(dtrain.get_label())
         bst = xgb.train(param, dtrain, self.epochs, evallist)
         print(bcolors.ENDC)
         end = time.perf_counter()
@@ -138,12 +156,16 @@ class xgboost_generator(AbstractController):
         res['Accuracy'] = '{:.6f}'.format(accuracy)
         return res
 
+    # TODO: rami and aviad said different things, which accuracy should we take?
     def get_performances_multiclass(self, model, X_test, y_test, binary):
         y_pred = model.predict(X_test)
         y_pred = [float(i) for i in list(y_pred)]
         y_test_list = [i for i in list(y_test.values)]
         if binary:
             y_pred = [math.floor(i) if i < 0.5 else 1 for i in y_pred]
+        print("labels = ")
+        self.labels = list(map(str, self.labels))
+        print(self.labels)
         print(classification_report(y_test_list, y_pred, target_names=self.labels))
         res = classification_report(y_test_list, y_pred, target_names=self.labels, output_dict=True)
         return res
