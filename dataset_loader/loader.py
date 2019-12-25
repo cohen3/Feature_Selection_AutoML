@@ -1,3 +1,4 @@
+# coding=utf-8
 import os
 from os import listdir
 from os.path import isfile, join
@@ -24,21 +25,21 @@ class data_loader(AbstractController):
         for file in self.data_files:
             df = pd.read_csv(join(self.csv_data_path, file))
             df = self.preprocess(df)
-            # TODO: data overfitting? drop irrelevant columns like IDs, names, etc
+            # print(os.path.splitext(file)[0] + '_corr_graph\ntarget:' + df.columns[-1])
+            print('dataset name: {}\tfeatures: {}\tinstances: {}'.format(os.path.splitext(file)[0],
+                                                                         df.shape[1],
+                                                                         df.shape[0]))
             method_to_call = getattr(dataset_loader.corr_calc, self.corr_method)
             # creates a full graph (corr matrix)
-            self.corr_mat[str(os.path.splitext(file)[0])+'_corr_graph'] = method_to_call(df)
-            # TODO: add TMFG or PMFG to extract full graph
+            try:
+                self.corr_mat[str(os.path.splitext(file)[0])+'_corr_graph'] = method_to_call(df)
+            except Exception as e:
+                print("is nan: ".format(np.where(np.isnan(df))))
+                continue
             self.targets["dataset_name"].append(str(os.path.splitext(file)[0])+'_corr_graph')
             self.targets["target_feature"].append(df.columns[-1])
-            print(os.path.splitext(file)[0]+'_corr_graph' + df.columns[-1])
             # builtin {‘pearson’, ‘kendall’, ‘spearman’}
-            # dataset_corr_graph = "CREATE TABLE IF NOT EXISTS " + str(os.path.splitext(file)[0]) \
-            #                      + "_corr_graph (name VARCHAR PRIMARY KEY"
-            # for i in range(len(df.columns)):
-            #     dataset_corr_graph += ",\nfeature" + str(i) + " VARCHAR NOT NULL"
-            # dataset_corr_graph += ");"
-            # self.db.create_table(dataset_corr_graph)
+
 
     def preprocess(self, df):
         # categorical values to numeric codes
@@ -52,6 +53,7 @@ class data_loader(AbstractController):
     def execute(self, window_start):
         for name, file_corr_mat in self.corr_mat.items():
             # each is a full graph (corr matrix)
+            print('saving '+name)
             self.db.df_to_table(df=file_corr_mat, name=name, mode='replace')
         df = pd.DataFrame(self.targets)
         self.db.df_to_table(df=df, name="target_features", mode='replace')

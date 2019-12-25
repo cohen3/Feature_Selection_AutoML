@@ -1,6 +1,7 @@
 import time
 from os import walk, listdir
 from os.path import isfile
+import warnings
 import csv
 import xgboost as xgb
 import networkx as nx
@@ -16,6 +17,9 @@ from configuration.configuration import getConfig
 from tool_kit.AbstractController import AbstractController
 from tool_kit.colors import bcolors
 
+warnings.filterwarnings(action='ignore', category=DeprecationWarning)
+warnings.filterwarnings(action='ignore', category=UserWarning)
+warnings.filterwarnings(action='ignore', category=FutureWarning)
 
 class xgboost_generator(AbstractController):
     def __init__(self, db):
@@ -36,16 +40,24 @@ class xgboost_generator(AbstractController):
         self.labels = []
 
     def execute(self, window_start):
+        with open(r'data/dataset.csv', 'w', newline='') as new_dataset:
+            new_ds_reader = csv.writer(new_dataset, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            new_ds_reader.writerow(['graph_name', 'acc', 'time', 'macro-avg-f1-score'])
+            for file in listdir('data/sub_graphs'):
+                print('\n' + file)
+                dataset = file.split("_corr_graph")[0]
+                print(bcolors.OKBLUE + "Dataset: " + dataset + bcolors.ENDC)
+                graph = nx.read_gpickle('data/sub_graphs/' + file)
+                # graph_features = self.print_graph_features(graph)
+                # self.plot_graph(graph)
+                X_train, X_test, y_train, y_test, num = self.prepare_dataset(dataset, graph)
+                res = self.__fit(X_train, X_test, y_train, y_test, self.num_class[dataset])
+                # 'accuracy', 'macro avg', 'weighted avg'
+                new_ds_reader.writerow([file, res['accuracy'],
+                                        res['train_time'],
+                                        res['macro avg']['f1-score']])
 
-        for file in listdir('data/sub_graphs'):
-            print('\n' + file)
-            dataset = file.split("_corr_graph")[0]
-            print(bcolors.OKBLUE + "Dataset: " + dataset + bcolors.ENDC)
-            graph = nx.read_gpickle('data/sub_graphs/' + file)
-            # graph_features = self.print_graph_features(graph)
-            # self.plot_graph(graph)
-            X_train, X_test, y_train, y_test, num = self.prepare_dataset(dataset, graph)
-            res = self.__fit(X_train, X_test, y_train, y_test, self.num_class[dataset])
+
             # self.commit_results(graph_features, res)
 
     def prepare_dataset(self, dataset_name='', graph=None):
@@ -168,6 +180,7 @@ class xgboost_generator(AbstractController):
         print(self.labels)
         print(classification_report(y_test_list, y_pred, target_names=self.labels))
         res = classification_report(y_test_list, y_pred, target_names=self.labels, output_dict=True)
+        # print(res.keys())
         return res
 
     def plot_graph(self, graph):

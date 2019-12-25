@@ -7,11 +7,10 @@ from tool_kit.colors import bcolors
 import pandas as pd
 import matplotlib.pyplot as plt
 import networkx as nx
-from networkx.algorithms.clique import *
 import random as rnd
 
 
-class random_walk(AbstractController):
+class random_selection(AbstractController):
 
     def __init__(self, db):
         AbstractController.__init__(self, db)
@@ -37,7 +36,6 @@ class random_walk(AbstractController):
         datasets = pd.read_csv('data/dataset_out/target_features.csv')['dataset_name'].tolist()
         print("data sets: {}".format([i for i in datasets]))
         graph_id = 1
-        datasets.remove('data_10000_features_corr_graph')
         for data in datasets:
             print(bcolors.BOLD + bcolors.UNDERLINE + bcolors.OKBLUE + 'Dataset: ' + data
                   + bcolors.ENDC + bcolors.ENDC + bcolors.ENDC)
@@ -87,11 +85,19 @@ class random_walk(AbstractController):
         for f in filelist:
             os.remove(os.path.join('data/sub_graphs', f))
 
-    def __connected_components(self, G):
-        pass
+    def plot_graph(self, graph):
+        elarge = [(u, v) for (u, v, d) in graph.edges(data=True) if d['weight'] > 0.8]
+        esmall = [(u, v) for (u, v, d) in graph.edges(data=True) if d['weight'] <= 0.8]
 
-    def __find_cliques(self, G):
-        cliques = enumerate_all_cliques(G)
-        for clique in cliques:
-            print(clique)
-        pass
+        pos = nx.spring_layout(graph)  # positions for all nodes
+        # nodes
+        nx.draw_networkx_nodes(graph, pos, node_size=20)
+        # edges
+        nx.draw_networkx_edges(graph, pos, edgelist=elarge,
+                               width=1, style='dashed')
+        nx.draw_networkx_edges(graph, pos, edgelist=esmall,
+                               width=1, alpha=0.5, edge_color='b', style='dashed')
+        # labels
+        # nx.draw_networkx_labels(graph, pos, font_size=4, font_family='sans-serif')
+        plt.axis('off')
+        plt.show()

@@ -15,6 +15,8 @@ class graph_generation(AbstractController):
 
     def setUp(self):
         self.dataset_table = getConfig().eval(self.__class__.__name__, "dataset_table")
+
+    def execute(self, window_start):
         if self.db.is_csv:
             self.table_list = [f for f in listdir('data/dataset_out/') if isfile(join('data/dataset_out/', f))]
         else:
@@ -25,16 +27,6 @@ class graph_generation(AbstractController):
             self.table_list.remove(self.dataset_table)
         if "target_features" in self.table_list:
             self.table_list.remove("target_features")
-
-        # dataset_corr_graph = "CREATE TABLE IF NOT EXISTS full_corr_graph" + \
-        #                      " (file VARCHAR PRIMARY KEY," + \
-        #                      " feature1 VARCHAR PRIMARY KEY," + \
-        #                      " feature2 VARCHAR PRIMARY KEY," + \
-        #                      " corr FLOAT);"
-        # self.db.create_table(dataset_corr_graph)
-
-    def execute(self, window_start):
-        print ("#!#!#!"*50)
 
         # data_dict = {'dataset_name': [], 'feature1': [], 'feature2': [], 'corr': []}
         # for corr_table in self.table_list:
