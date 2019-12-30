@@ -12,6 +12,7 @@ from graph_generation.sub_graph_generation_random_selection import random_select
 from graph_generation.sub_graph_generation_random_walk import random_walk
 from graph_generation.graph_feature_extraction import graph_feature_extraction
 from dataset_generation.xgboost_dataset_generator import xgboost_generator
+from subgraph_embadding.sub2vec import sub2vec
 from DB.csv_db import CSV_DB
 from DB.schema_definition import DB
 
@@ -27,6 +28,7 @@ modules_dict['random_selection'] = random_selection
 modules_dict['random_walk'] = random_walk
 modules_dict['graph_feature_extraction'] = graph_feature_extraction
 modules_dict['xgboost_generator'] = xgboost_generator
+modules_dict['sub2vec'] = sub2vec
 
 window_start = getConfig().eval("DEFAULT", "start_date")
 newbmrk = os.path.isfile("benchmark.csv")

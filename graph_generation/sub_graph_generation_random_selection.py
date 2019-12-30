@@ -23,14 +23,14 @@ class random_selection(AbstractController):
         self.num_of_subgraphs = getConfig().eval(self.__class__.__name__, "num_of_subgraphs_each")
         self.clear_existing_subgraphs = getConfig().eval(self.__class__.__name__, "clear_existing_subgraphs")
 
-
-
     def execute(self, window_start):
         # clear old gpickle graph files
-        if self.clear_existing_subgraphs:
-            print('removing old subgraphs')
-            self.clear_graphs()
-
+        if os.path.exists('data/sub_graphs'):
+            if self.clear_existing_subgraphs:
+                print('removing old subgraphs')
+                self.clear_graphs()
+        else:
+            os.mkdir('data/sub_graphs')
         # execute random walk
         print('read from full graph:')
         datasets = pd.read_csv('data/dataset_out/target_features.csv')['dataset_name'].tolist()
@@ -46,7 +46,7 @@ class random_selection(AbstractController):
             #     full_graph = self.db.execQuery(
             #         'SELECT * FROM ' + self.dataset_table + ' WHERE dataset_name=\'' + data + '\'')
             # calculate number of max vertexes
-            df = pd.read_csv('data/dataset_out/'+data+'.csv')
+            df = pd.read_csv('data/dataset_out/' + data + '.csv')
             graph_len = len(df.columns) - 1
             max_vertexes = int(graph_len * self.vertex_threshold)
             df = df.set_index(df.columns)
@@ -61,8 +61,9 @@ class random_selection(AbstractController):
             # generate as many sub graphs as indicated in the config file
             nodes_count = len(full_graph.nodes) - 1
             g = 0
+            os.mkdir('data/sub_graphs/' + data)
             while g < self.num_of_subgraphs:
-                for i in range(int(nodes_count*self.vertex_threshold), nodes_count):
+                for i in range(int(nodes_count * self.vertex_threshold), nodes_count):
                     if g >= self.num_of_subgraphs:
                         break
                     print('working on subgraph ' + str(graph_id))
@@ -72,13 +73,12 @@ class random_selection(AbstractController):
                         continue
                     subgraphs_set.append(sub)
                     g1 = full_graph.subgraph(sub)
-                    nx.write_gpickle(g1, 'data/sub_graphs/' + data + '_subgraph' + str(graph_id) + '.gpickle')
+                    nx.write_gpickle(g1, 'data/sub_graphs/' + data + '/subgraph' + str(graph_id) + '.gpickle')
                     graph_id += 1
                     g += 1
                     # TODO: perform the random walk
                     # TODO: dont allow empty graphs
                     # TODO: should we connect non connected nodes with weight 0 o make the graph connected?
-
 
     def clear_graphs(self):
         filelist = [f for f in os.listdir('data/sub_graphs') if f.endswith(".gpickle")]
