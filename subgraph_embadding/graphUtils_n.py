@@ -12,7 +12,7 @@ def randomWalk(G, walkSize):
     walkList = []
     curNode = random.choice(list(G.nodes()))
 
-    while (len(walkList) < walkSize):
+    while len(walkList) < walkSize:
         walkList.append(curNode)
         curNode = random.choice(list(G.neighbors(curNode)))
     return walkList

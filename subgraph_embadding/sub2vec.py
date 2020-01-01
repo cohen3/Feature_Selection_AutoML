@@ -33,61 +33,33 @@ class sub2vec(AbstractController):
 
     def execute(self, window_start):
         datasets = pd.read_csv('data/dataset_out/target_features.csv')['dataset_name'].tolist()
-        embaddings_list = []
         with open("data/vectors.csv", "w", newline="") as f:
             pass
         for data in datasets:
             print(bcolors.BOLD + bcolors.UNDERLINE + bcolors.OKBLUE + 'Dataset: ' + data
                   + bcolors.ENDC + bcolors.ENDC + bcolors.ENDC)
-            lst\
-                = []
+            lst = []
             idx_to_name = {}
             if self.embedding_type is "structural":
-                file0 = 'data\\sub_graphs\\' + data + '\\'
+                file0 = 'data\\sub_graphs\\' + data + '\\'  # TODO: change to OS
                 print("here1")
                 lst, idx_to_name = structural_embedding(file0, iterations=self.iterations, dimensions=self.dimensions,
                                                         windowSize=self.windowSize, dm=self.dm,
                                                         walkLength=self.walkLength)
-
-            saveVectors(lst, idx_to_name)
-        #         print(lst[0])
-        #         for idx in idx_to_name:
-        #             lst2[idx].append(idx_to_name[idx])
-        #         input(lst2[0])
-        #         embaddings_list.append(lst2)
-        # with open("data/vectors.csv", "a", newline="") as f:
-        #     writer = csv.writer(f)
-        #     writer.writerows(embaddings_list)
-
-    # parser = argparse.ArgumentParser(description="sub2vec.")
-    # parser.add_argument('--input', nargs='?', default='input', required=True, help='Input directory')
-    # parser.add_argument('--property', default='n', choices=['n', 's'], required=True,
-    #                     help='Type of subgraph property to presernve. For neighborhood property add " --property n"'
-    #                          ' and for the structural property " --property s" ')
-    # parser.add_argument('--walkLength', default=100000, type=int, help='length of random walk on each subgraph')
-    # parser.add_argument('--output', required=True, default='output', help='Output representation file')
-    # parser.add_argument('--d', default=128, type=int, help='dimension of learned feautures for each subgraph.')
-    # parser.add_argument('--iter', default=20, type=int, help='training iterations')
-    # parser.add_argument('--windowSize', default=2, type=int,
-    #                     help='Window size of the model.')
-    # parser.add_argument('--p', default=0.5, type=float,
-    #                     help='meta parameter.')
-    # parser.add_argument('--model', default='dm', choices=['dbon', 'dm'],
-    #                     help='models for learninig vectors SV-DM (dm) or SV-DBON (dbon).')
-    # args = parser.parse_args()
-    # if args.property == 's':
-    #     structural_embedding(args)
-    # else:
-    #     neighborhood_embedding(args)
+            for key, value in idx_to_name.items():
+                print(idx_to_name[key])
+                idx_to_name[key] = data + "_" + idx_to_name[key] + ".gpickle"
+                print(idx_to_name[key])
+            save_vectors(lst, idx_to_name)
 
 
-# if __name__ == '__main__':
-#     main()
-def saveVectors(vectors, IdToName):
+def save_vectors(vectors, IdToName):
+    results = pd.read_csv('data\\dataset.csv')
     output = open('data\\vectors.csv', 'a+')
     for i in range(len(vectors)):
-        output.write(str(IdToName[i]))
+        score = results.loc[results['graph_name'] == str(IdToName[i])]['macro-avg-f1-score']
+        output.write(str(score.tolist()[0]))
         for j in vectors[i]:
-            output.write(','+str(j))
+            output.write(',' + str(j))
         output.write('\n')
     output.close()

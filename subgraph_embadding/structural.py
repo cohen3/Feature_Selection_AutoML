@@ -34,8 +34,6 @@ def get_degree_labelled_graph(G, range_to_labels):
     for node in degree_dict.keys():
         val = degree_dict[node] / float(nx.number_of_nodes(G))
         label_dict[node] = in_range(range_to_labels, val)
-        # val = degree_dict[node]/float(nx.number_of_nodes(G))
-        # label_dict[node] = degree_dict[node]
 
         nx.set_node_attributes(G, name='label', values=label_dict)
 
