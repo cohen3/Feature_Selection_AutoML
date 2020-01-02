@@ -1,4 +1,5 @@
 import itertools
+import math
 import os
 import random
 
@@ -19,6 +20,7 @@ class random_walk(AbstractController):
     def __init__(self, db):
         AbstractController.__init__(self, db)
         self.db = db
+        self.graphs = set()
 
     def setUp(self):
         self.method = getConfig().eval(self.__class__.__name__, "method")
@@ -51,28 +53,59 @@ class random_walk(AbstractController):
                 self.__save_subgraphs(cliques, data, 'clique')
             if self.method == 'tree' or self.method == 'all':
                 print('building trees...')
-                sources = random.choices(list(full_graph.nodes), k=len(list(full_graph.nodes))*0.1)
+                sources = random.choices(list(full_graph.nodes), k=int(len(list(full_graph.nodes))*0.01))
                 for node in sources:
-                    tree = dfs_tree(full_graph, source=node, depth_limit=int(len(full_graph)/2))
-                    self.__save_subgraphs([tree], data, 'tree')
+                    if graph_id >= 10:
+                        break
+                    tree = dfs_tree(full_graph, source=node, depth_limit=int(math.sqrt(len(full_graph))))
+                    tree = tree.to_undirected()
+                    # sub_graph = self.complete_graph_from_list(list(tree))
+                    # pos = nx.spring_layout(tree)
+                    # nx.draw_shell(tree)
+                    # plt.show()
+                    # x = nx.isolates(tree)
+                    # for i in x:
+                    #     print(i)
+                    # x = input()
+                    nx.write_gpickle(tree,
+                                     'data/sub_graphs/' + data + '/subgraph_' + 'tree' + str(graph_id) + '.gpickle')
+                    graph_id += 1
 
+    def __graph_exist(self, nodes):
+        pass
 
     def __save_subgraphs(self, graph_iter, name, kind):
         graph_id = 1
         try:
             for sub in graph_iter:
-                sub_graph = self.complete_graph_from_list(list(sub))
-                nx.write_gpickle(sub_graph, 'data/sub_graphs/' + name + '_subgraph_' + kind + str(graph_id) + '.gpickle')
+                n = len(list(sub))
+                if n < 5:
+                    continue
+                if graph_id >= 200:
+                    break
+                G = self.complete_graph_from_list(sub)
+                nx.write_gpickle(G, 'data/sub_graphs/' + name + '/subgraph_' + kind + str(graph_id) + '.gpickle')
                 graph_id += 1
         except MemoryError as me:
             pass
 
     def complete_graph_from_list(self, L, create_using=None):
-        G = nx.empty_graph(len(L), create_using)
-        if len(L) > 1:
-            edges = itertools.combinations(L, 2)
-            G.add_edges_from(edges)
+        G = nx.complete_graph(L, create_using)
         return G
+
+    def plot_graph(self, graph):
+        # elarge = [(u, v) for (u, v, d) in graph.edges(data=True)]
+        elarge = list(graph.edges())
+        pos = nx.spring_layout(graph)  # positions for all nodes
+        # nodes
+        nx.draw_networkx_nodes(graph, pos, node_size=20)
+        # edges
+        nx.draw_networkx_edges(graph, pos,
+                               width=5, style='dashed')
+        # labels
+        # nx.draw_networkx_labels(graph, pos, font_size=4, font_family='sans-serif')
+        plt.axis('off')
+        plt.show()
 
     def clear_graphs(self):
         filelist = [f for f in os.listdir('data/sub_graphs') if f.endswith(".gpickle")]

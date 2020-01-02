@@ -81,9 +81,12 @@ class random_selection(AbstractController):
                     # TODO: should we connect non connected nodes with weight 0 o make the graph connected?
 
     def clear_graphs(self):
-        filelist = [f for f in os.listdir('data/sub_graphs') if f.endswith(".gpickle")]
-        for f in filelist:
-            os.remove(os.path.join('data/sub_graphs', f))
+        # filelist = [f for f in os.listdir('data/sub_graphs') if f.endswith(".gpickle")]
+        # for f in filelist:
+        #     os.remove(os.path.join('data/sub_graphs', f))
+        import shutil
+        shutil.rmtree("data/sub_graphs")
+        os.mkdir("data/sub_graphs")
 
     def plot_graph(self, graph):
         elarge = [(u, v) for (u, v, d) in graph.edges(data=True) if d['weight'] > 0.8]

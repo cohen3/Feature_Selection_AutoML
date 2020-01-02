@@ -39,12 +39,10 @@ class sub2vec(AbstractController):
         for data in datasets:
             print(bcolors.BOLD + bcolors.UNDERLINE + bcolors.OKBLUE + 'Dataset: ' + data
                   + bcolors.ENDC + bcolors.ENDC + bcolors.ENDC)
-            lst\
-                = []
+            lst = []
             idx_to_name = {}
             if self.embedding_type is "structural":
                 file0 = 'data\\sub_graphs\\' + data + '\\'
-                print("here1")
                 lst, idx_to_name = structural_embedding(file0, iterations=self.iterations, dimensions=self.dimensions,
                                                         windowSize=self.windowSize, dm=self.dm,
                                                         walkLength=self.walkLength)

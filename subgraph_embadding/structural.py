@@ -23,7 +23,7 @@ def random_walk_degree_labels(G, walkSize):
     walk_list = []
 
     while len(walk_list) < walkSize:
-        walk_list.append(G.node[cur_node]['label'])
+        walk_list.append(G.nodes[cur_node]['label'])
         cur_node = random.choice(list(G.neighbors(cur_node)))
     return walk_list
 
@@ -49,7 +49,7 @@ def in_range(rangeDict, val):
 
 
 def generate_walk_file(dir_name, walk_length, alpha):
-    walk_dir_path = dir_name.replace("\\sub_graphs\\", "\\walks\\")
+    walk_dir_path = dir_name.replace('sub_graphs', 'walks')
     if not os.path.exists(os.path.dirname(walk_dir_path)):
         os.mkdir(os.path.dirname(walk_dir_path))
     walk_file = open(walk_dir_path + '.walk', 'w')
@@ -72,7 +72,7 @@ def generate_walk_file(dir_name, walk_length, alpha):
 
 def structural_embedding(input_dir, iterations=20, dimensions=128, windowSize=2, dm=1, walkLength=64):
     index_to_name = generate_walk_file(input_dir, walkLength, 0.5)
-    walk_dir_path = input_dir.replace("\\sub_graphs\\", "\\walks\\")
+    walk_dir_path = input_dir.replace('sub_graphs', 'walks')
     sentences = doc.TaggedLineDocument(walk_dir_path + '.walk')
     model = doc.Doc2Vec(sentences, size=dimensions, iter=iterations, dm=dm, window=windowSize)
     return list(model.docvecs.vectors_docs), index_to_name
