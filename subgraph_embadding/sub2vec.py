@@ -27,8 +27,9 @@ class sub2vec(AbstractController):
         self.embedding_type = getConfig().eval(self.__class__.__name__, "embedding_type")
 
     def setUp(self):
-        if not os.path.exists('data\\walks\\'):
-            os.mkdir('data\\walks\\')
+        dir = os.path.join('data', 'walks', '')
+        if not os.path.exists(dir):
+            os.mkdir(dir)
         return
 
     def execute(self, window_start):
@@ -44,7 +45,7 @@ class sub2vec(AbstractController):
             lst = []
             idx_to_name = {}
             if self.embedding_type is "structural":
-                file0 = 'data\\sub_graphs\\' + data + '\\'
+                file0 = os.path.join('data', 'sub_graphs', data, '')
                 lst, idx_to_name = structural_embedding(file0, iterations=self.iterations, dimensions=self.dimensions,
                                                         windowSize=self.windowSize, dm=self.dm,
                                                         walkLength=self.walkLength)
@@ -56,8 +57,10 @@ class sub2vec(AbstractController):
 
 
 def save_vectors(vectors, IdToName):
-    results = pd.read_csv('data\\dataset.csv')
-    output = open('data\\vectors.csv', 'a+')
+    data = os.path.join('data', 'dataset.csv')
+    vectors_dir = os.path.join('data', 'vectors.csv')
+    results = pd.read_csv(data)
+    output = open(vectors_dir, 'a+')
     for i in range(len(vectors)):
         score = results.loc[results['graph_name'] == str(IdToName[i])]['acc']
         output.write(str(score.tolist()[0]))

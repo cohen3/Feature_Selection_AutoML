@@ -55,8 +55,6 @@ class random_walk(AbstractController):
                 print('building trees...')
                 sources = random.choices(list(full_graph.nodes), k=int(len(list(full_graph.nodes))*0.01))
                 for node in sources:
-                    if graph_id >= 10:
-                        break
                     tree = dfs_tree(full_graph, source=node, depth_limit=int(math.sqrt(len(full_graph))))
                     tree = tree.to_undirected()
                     # sub_graph = self.complete_graph_from_list(list(tree))

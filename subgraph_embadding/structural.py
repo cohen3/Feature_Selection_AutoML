@@ -74,4 +74,3 @@ def structural_embedding(input_dir, iterations=20, dimensions=128, windowSize=2,
     sentences = doc.TaggedLineDocument(walk_dir_path + '.walk')
     model = doc.Doc2Vec(sentences, size=dimensions, iter=iterations, dm=dm, window=windowSize)
     return list(model.docvecs.vectors_docs), index_to_name
-
