@@ -34,7 +34,10 @@ class sub2vec(AbstractController):
     def execute(self, window_start):
         datasets = pd.read_csv('data/dataset_out/target_features.csv')['dataset_name'].tolist()
         with open("data/vectors.csv", "w", newline="") as f:
-            pass
+            f.write('target')
+            for feature in range(self.dimensions):
+                f.write(',' + 'col_' + str(feature))
+            f.write('\n')
         for data in datasets:
             print(bcolors.BOLD + bcolors.UNDERLINE + bcolors.OKBLUE + 'Dataset: ' + data
                   + bcolors.ENDC + bcolors.ENDC + bcolors.ENDC)
@@ -56,7 +59,7 @@ def save_vectors(vectors, IdToName):
     results = pd.read_csv('data\\dataset.csv')
     output = open('data\\vectors.csv', 'a+')
     for i in range(len(vectors)):
-        score = results.loc[results['graph_name'] == str(IdToName[i])]['macro-avg-f1-score']
+        score = results.loc[results['graph_name'] == str(IdToName[i])]['acc']
         output.write(str(score.tolist()[0]))
         for j in vectors[i]:
             output.write(',' + str(j))
