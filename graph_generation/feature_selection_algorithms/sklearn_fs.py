@@ -1,6 +1,6 @@
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import f_classif
-from abstract_fs import abstract_fs
+from graph_generation.feature_selection_algorithms.abstract_fs import abstract_fs
 
 
 class sklearn_fd(abstract_fs):
