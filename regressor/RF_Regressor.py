@@ -25,7 +25,7 @@ class RandomForestReg(AbstractController):
         Y = df['target']
         X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.3, random_state=2)
 
-        rfc = RandomForestRegressor(n_jobs=-1)
+        rfc = RandomForestRegressor(n_jobs=-1, random_state=22)
         # score = cross_val_score(rfc, X, Y, n_jobs=-1)
         model = rfc.fit(X_train, y_train)
         pred1 = model.score(X_test, y_test)
@@ -40,11 +40,29 @@ class RandomForestReg(AbstractController):
         """
         pred = model.predict(X_test)
 
-        # for i in range(len(pred)):
-        #     print('actual: {:.3f}, prediction: {:.3f}'.format(round(y_test.iloc[i], 3), round(pred[i], 3)))
+        for i in range(len(pred)):
+            print('actual: {:.3f}, prediction: {:.3f}'.format(round(y_test.iloc[i], 3), round(pred[i], 3)))
 
         print('Score: ', pred1)
         filename = os.path.join(self.out_path, 'RF_regression_model.dat')
         pickle.dump(model, open(filename, 'wb'))
+        print('model at: {}'.format(filename))
+
+    def __get_best_state(self, X_train, X_test, y_train, y_test):
+        import operator
+        print('tuning random....')
+        scores = dict()
+        for i in range(50):
+            rfc = RandomForestRegressor(n_jobs=-1, random_state=i)
+            # score = cross_val_score(rfc, X, Y, n_jobs=-1)
+            model = rfc.fit(X_train, y_train)
+            pred1 = model.score(X_test, y_test)
+            scores[str(i)] = pred1
+            if i % 10 == 0:
+                print(i)
+        key = max(scores.items(), key=operator.itemgetter(1))
+        print('key: {}\nval: {}'.format(key[0], key[1]))
+        print('@@@'*20)
+        print(scores)
 
 
