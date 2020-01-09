@@ -3,7 +3,7 @@ import os
 import time
 
 from tool_kit.colors import bcolors
-from Test_Module.Test import Test_Module
+from Test_Module.Test import GA_Feature_Selection
 
 from configuration.configuration import getConfig
 from dataset_loader.loader import data_loader
@@ -13,7 +13,9 @@ from graph_generation.sub_graph_generation_random_walk import random_walk
 from graph_generation.graph_feature_extraction import graph_feature_extraction
 from dataset_generation.xgboost_dataset_generator import xgboost_generator
 from dataset_generation.decision_tree_dataset_generator import Decision_Tree
+from regressor.xgboost_regressor import XgboostRegression
 from subgraph_embadding.sub2vec import sub2vec
+from Test_Module.Test import GA_Feature_Selection
 from DB.csv_db import CSV_DB
 from regressor.RF_Regressor import RandomForestReg
 from DB.schema_definition import DB
@@ -33,6 +35,8 @@ modules_dict['xgboost_generator'] = xgboost_generator
 modules_dict['Decision_Tree'] = Decision_Tree
 modules_dict['sub2vec'] = sub2vec
 modules_dict['RandomForestReg'] = RandomForestReg
+modules_dict['XgboostRegression'] = XgboostRegression
+modules_dict['GA_Feature_Selection'] = GA_Feature_Selection
 
 window_start = getConfig().eval("DEFAULT", "start_date")
 newbmrk = os.path.isfile("benchmark.csv")

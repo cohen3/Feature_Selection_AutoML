@@ -25,6 +25,7 @@ class sub2vec(AbstractController):
         self.dm = getConfig().eval(self.__class__.__name__, "dm")
         self.walkLength = getConfig().eval(self.__class__.__name__, "walkLength")
         self.embedding_type = getConfig().eval(self.__class__.__name__, "embedding_type")
+        self.att = getConfig().eval(self.__class__.__name__, "attribute")
 
     def setUp(self):
         dir = os.path.join('data', 'walks', '')
@@ -53,16 +54,16 @@ class sub2vec(AbstractController):
                 print(idx_to_name[key])
                 idx_to_name[key] = data + "_" + idx_to_name[key] + ".gpickle"
                 print(idx_to_name[key])
-            save_vectors(lst, idx_to_name)
+            save_vectors(lst, idx_to_name, self.att)
 
 
-def save_vectors(vectors, IdToName):
+def save_vectors(vectors, IdToName, att):
     data = os.path.join('data', 'dataset.csv')
     vectors_dir = os.path.join('data', 'vectors.csv')
     results = pd.read_csv(data)
     output = open(vectors_dir, 'a+')
     for i in range(len(vectors)):
-        score = results.loc[results['graph_name'] == str(IdToName[i])]['acc']
+        score = results.loc[results['graph_name'] == str(IdToName[i])][att]
         output.write(str(score.tolist()[0]))
         for j in vectors[i]:
             output.write(',' + str(j))

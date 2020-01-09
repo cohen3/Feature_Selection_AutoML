@@ -35,6 +35,7 @@ class data_loader(AbstractController):
             try:
                 self.corr_mat[str(os.path.splitext(file)[0])+'_corr_graph'] = method_to_call(features_df)
             except Exception as e:
+                print(e)
                 print("is nan: ".format(np.where(np.isnan(df))))
                 continue
             self.targets["dataset_name"].append(str(os.path.splitext(file)[0])+'_corr_graph')

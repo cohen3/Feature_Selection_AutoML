@@ -5,7 +5,7 @@ from os import listdir
 from os.path import join
 import networkx as nx
 import pandas as pd
-from sklearn.metrics import precision_score, recall_score, roc_curve, auc, accuracy_score
+from sklearn.metrics import precision_score, recall_score, roc_curve, auc, accuracy_score, f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 
@@ -33,7 +33,7 @@ class Decision_Tree(AbstractController):
     def execute(self, window_start):
         with open(r'data/dataset.csv', 'w', newline='') as new_dataset:
             new_ds_reader = csv.writer(new_dataset, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            new_ds_reader.writerow(['graph_name', 'acc', 'time'])
+            new_ds_reader.writerow(['graph_name', 'acc', 'time', 'average_weighted_F1'])
             for dataset in self.datasets:
                 print(bcolors.OKBLUE + "Dataset: " + dataset + bcolors.ENDC)
                 for file in listdir('data/sub_graphs/'+dataset):
@@ -46,7 +46,7 @@ class Decision_Tree(AbstractController):
                     res = self.__fit(X_train, X_test, y_train, y_test, self.num_class[dataset_name])
                     # 'accuracy', 'macro avg', 'weighted avg'
                     new_ds_reader.writerow([dataset+'_'+file, res['accuracy'],
-                                            res['train_time']])
+                                            res['train_time'], res['average_weighted_F1']])
 
 
             # self.commit_results(graph_features, res)
@@ -105,7 +105,8 @@ class Decision_Tree(AbstractController):
         res = dict()
         res['train_time'] = end - start
         res['accuracy'] = acc
-        print("Accuracy:", acc)
+        res['average_weighted_F1'] = f1_score(y_test, y_pred, average='weighted')
+        print("Accuracy: {}\tAvg weighted F1: {}".format(res['accuracy'], res['average_weighted_F1']))
 
         return res
 

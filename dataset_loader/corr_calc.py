@@ -17,10 +17,10 @@ def cos_sim(df):
     # print(df.columns[0])
     # df = df.drop(df.columns[0], axis=1)
     names = list(df.columns)
-    names = names[1:]
+    # names = names[1:]
     df = df.transpose()
     sim_array = cosine_similarity(df)
-    sim_df = pd.DataFrame(data=sim_array[1:, 1:],    # values
+    sim_df = pd.DataFrame(data=sim_array[0:, 0:],    # values
                           index=names,    # 1st column as index
                           columns=names)  # 1st row as the column names
     # cols = list(df.columns)
