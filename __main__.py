@@ -15,7 +15,7 @@ from dataset_generation.xgboost_dataset_generator import xgboost_generator
 from dataset_generation.decision_tree_dataset_generator import Decision_Tree
 from subgraph_embadding.sub2vec import sub2vec
 from DB.csv_db import CSV_DB
-from regressor.RF_Regressor import RandomForestReg
+from graph_generation.sub_graph_generation_algo_feature_selection import algo_feature_selection
 from DB.schema_definition import DB
 
 modules_dict = {}
@@ -26,13 +26,13 @@ modules_dict["DB"] = CSV_DB
 db = CSV_DB()
 modules_dict['data_loader'] = data_loader
 modules_dict['graph_generation'] = graph_generation
+modules_dict['algo_feature_selection'] = algo_feature_selection
 modules_dict['random_selection'] = random_selection
 modules_dict['random_walk'] = random_walk
 modules_dict['graph_feature_extraction'] = graph_feature_extraction
 modules_dict['xgboost_generator'] = xgboost_generator
 modules_dict['Decision_Tree'] = Decision_Tree
 modules_dict['sub2vec'] = sub2vec
-modules_dict['RandomForestReg'] = RandomForestReg
 
 window_start = getConfig().eval("DEFAULT", "start_date")
 newbmrk = os.path.isfile("benchmark.csv")
