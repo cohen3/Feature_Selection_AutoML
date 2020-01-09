@@ -3,7 +3,6 @@ import os
 import time
 
 from tool_kit.colors import bcolors
-from Test_Module.Test import GA_Feature_Selection
 
 from configuration.configuration import getConfig
 from dataset_loader.loader import data_loader
@@ -19,6 +18,7 @@ from Test_Module.Test import GA_Feature_Selection
 from DB.csv_db import CSV_DB
 from regressor.RF_Regressor import RandomForestReg
 from DB.schema_definition import DB
+from graph_generation.sub_graph_generation_algo_feature_selection import algo_feature_selection
 
 modules_dict = {}
 
@@ -28,6 +28,7 @@ modules_dict["DB"] = CSV_DB
 db = CSV_DB()
 modules_dict['data_loader'] = data_loader
 modules_dict['graph_generation'] = graph_generation
+modules_dict['algo_feature_selection'] = algo_feature_selection
 modules_dict['random_selection'] = random_selection
 modules_dict['random_walk'] = random_walk
 modules_dict['graph_feature_extraction'] = graph_feature_extraction
