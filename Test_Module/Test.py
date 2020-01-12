@@ -74,7 +74,9 @@ class GA_Feature_Selection(AbstractController):
         print('clean up test_module')
 
     def __fitness(self, individuals):
-        # df = pd.read_csv(self.dataset)
+        df = pd.read_csv(self.dataset)
+        print(df.head(10))
+        x=input()
         # X = df[individuals]
         # return self.xgb_model_loaded.predict(X)
         return len(individuals)
