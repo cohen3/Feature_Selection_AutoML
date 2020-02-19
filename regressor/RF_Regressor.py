@@ -12,6 +12,7 @@ from sklearn.ensemble import RandomForestRegressor
 class RandomForestReg(AbstractController):
 
     def __init__(self, db):
+        AbstractController.__init__(self, db)
         self.db = db
         self.data_path = getConfig().eval(self.__class__.__name__, "data")
         self.out_path = getConfig().eval(self.__class__.__name__, "out")

@@ -39,7 +39,6 @@ class algo_feature_selection(AbstractController):
         # execute feature selection
         print('read from full graph:')
         datasets = pd.read_csv('data/dataset_out/target_features.csv')['dataset_name'].tolist()
-        print("data sets: {}".format([i for i in datasets]))
         for data in datasets:
             if not os.path.exists('data/sub_graphs/' + data):
                 os.mkdir('data/sub_graphs/' + data)
@@ -51,7 +50,6 @@ class algo_feature_selection(AbstractController):
             input_label = input_label[['target_feature']].values.tolist()[0][0]
             label_df = input_df[[input_label]]
             data_df = input_df.loc[:, input_df.columns != input_label]
-            print(data_df.shape)
             counter = 0
             classifiers = {"SGDClassifier": SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,
                                                           random_state=0, tol=None),
@@ -74,7 +72,7 @@ class algo_feature_selection(AbstractController):
                 graph = nx.from_pandas_adjacency(graph)
                 nx.write_gpickle(graph, 'data/sub_graphs/' + data + '/subgraph_' + clf_name + str(counter) + '.gpickle')
                 counter += 1
-                for idx in range(int(math.sqrt(len(indexes)) * 5)):
+                for idx in range(int(math.sqrt(len(indexes)) * 2)):
                     feats_to_remove = random.sample(indexes, int(len(indexes) / 3))
                     data_df_cpy = data_df.copy()
                     data_df_cpy.drop(data_df_cpy.columns[feats_to_remove], axis=1, inplace=True)
@@ -105,7 +103,6 @@ class algo_feature_selection(AbstractController):
                 counter += 1
 
             # ################################## End Feature Selection Model #####################################
-            input("*****" * 50)
 
     def clear_graphs(self):
         # filelist = [f for f in os.listdir('data/sub_graphs') if f.endswith(".gpickle")]

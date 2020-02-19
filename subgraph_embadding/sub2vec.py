@@ -37,6 +37,7 @@ class sub2vec(AbstractController):
         datasets = pd.read_csv('data/dataset_out/target_features.csv')['dataset_name'].tolist()
         with open("data/vectors.csv", "w", newline="") as f:
             f.write('target')
+            f.write(',dataset_name')
             for feature in range(self.dimensions):
                 f.write(',' + 'col_' + str(feature))
             f.write('\n')
@@ -54,10 +55,10 @@ class sub2vec(AbstractController):
                 print(idx_to_name[key])
                 idx_to_name[key] = data + "_" + idx_to_name[key] + ".gpickle"
                 print(idx_to_name[key])
-            save_vectors(lst, idx_to_name, self.att)
+            save_vectors(lst, idx_to_name, self.att, data)
 
 
-def save_vectors(vectors, IdToName, att):
+def save_vectors(vectors, IdToName, att, ds):
     data = os.path.join('data', 'dataset.csv')
     vectors_dir = os.path.join('data', 'vectors.csv')
     results = pd.read_csv(data)
@@ -65,7 +66,13 @@ def save_vectors(vectors, IdToName, att):
     for i in range(len(vectors)):
         score = results.loc[results['graph_name'] == str(IdToName[i])][att]
         output.write(str(score.tolist()[0]))
+        output.write(','+ds)
         for j in vectors[i]:
             output.write(',' + str(j))
         output.write('\n')
     output.close()
+
+#TODO: train sub2vec over all the graphs together
+#TODO: graph convolution network can generate embedding for a given graph
+#TODO: implement K-fold validation
+#TODO: after K-Fold, benchmanrk the sub2vec
