@@ -15,6 +15,7 @@ from dataset_generation.decision_tree_dataset_generator import Decision_Tree
 from regressor.xgboost_regressor import XgboostRegression
 from subgraph_embadding.sub2vec import sub2vec
 from Test_Module.Test import GA_Feature_Selection
+from Test_Module.test_regression_model import test_dataset_cross_validation
 from DB.csv_db import CSV_DB
 from regressor.RF_Regressor import RandomForestReg
 from DB.schema_definition import DB
@@ -38,6 +39,7 @@ modules_dict['sub2vec'] = sub2vec
 modules_dict['RandomForestReg'] = RandomForestReg
 modules_dict['XgboostRegression'] = XgboostRegression
 modules_dict['GA_Feature_Selection'] = GA_Feature_Selection
+modules_dict['test_dataset_cross_validation'] = test_dataset_cross_validation
 
 window_start = getConfig().eval("DEFAULT", "start_date")
 newbmrk = os.path.isfile("benchmark.csv")
