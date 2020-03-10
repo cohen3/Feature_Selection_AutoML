@@ -31,6 +31,7 @@ class data_loader(AbstractController):
                                                                          df.shape[0]))
             method_to_call = getattr(dataset_loader.corr_calc, self.corr_method)
             features_df = df.drop(df.columns[-1], axis=1)
+
             # creates a full graph (corr matrix)
             try:
                 self.corr_mat[str(os.path.splitext(file)[0])+'_corr_graph'] = method_to_call(features_df)

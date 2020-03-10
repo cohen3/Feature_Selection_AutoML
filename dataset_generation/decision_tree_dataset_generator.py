@@ -34,19 +34,17 @@ class Decision_Tree(AbstractController):
         with open(r'data/dataset.csv', 'w', newline='') as new_dataset:
             new_ds_reader = csv.writer(new_dataset, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             new_ds_reader.writerow(['graph_name', 'acc', 'time', 'average_weighted_F1'])
-            for dataset in self.datasets:
-                print(bcolors.OKBLUE + "Dataset: " + dataset + bcolors.ENDC)
-                for file in listdir('data/sub_graphs/'+dataset):
-                    file_path = join('data', 'sub_graphs', dataset, file)
-                    graph = nx.read_gpickle(file_path)
-                    # graph_features = self.print_graph_features(graph)
-                    # self.plot_graph(graph)
-                    dataset_name = dataset.split('_corr_graph')[0]
-                    X_train, X_test, y_train, y_test, num = self.prepare_dataset(dataset_name, graph)
-                    res = self.__fit(X_train, X_test, y_train, y_test, self.num_class[dataset_name])
-                    # 'accuracy', 'macro avg', 'weighted avg'
-                    new_ds_reader.writerow([dataset+'_'+file, res['accuracy'],
-                                            res['train_time'], res['average_weighted_F1']])
+            for file in listdir('data/sub_graphs'):
+                file_path = join('data', 'sub_graphs', file)
+                graph = nx.read_gpickle(file_path)
+                # graph_features = self.print_graph_features(graph)
+                # self.plot_graph(graph)
+                dataset_name = file.split('_corr_graph')[0]
+                X_train, X_test, y_train, y_test, num = self.prepare_dataset(dataset_name, graph)
+                res = self.__fit(X_train, X_test, y_train, y_test, self.num_class[dataset_name])
+                # 'accuracy', 'macro avg', 'weighted avg'
+                new_ds_reader.writerow([file, res['accuracy'],
+                                        res['train_time'], res['average_weighted_F1']])
 
 
             # self.commit_results(graph_features, res)
