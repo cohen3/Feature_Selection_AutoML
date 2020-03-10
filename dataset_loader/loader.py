@@ -43,7 +43,6 @@ class data_loader(AbstractController):
             self.targets["target_feature"].append(df.columns[-1])
             # builtin {‘pearson’, ‘kendall’, ‘spearman’}
 
-
     def preprocess(self, df):
         # categorical values to numeric codes
         for c in df.columns:

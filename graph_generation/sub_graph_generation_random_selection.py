@@ -24,6 +24,7 @@ class random_selection(AbstractController):
         self.clear_existing_subgraphs = getConfig().eval(self.__class__.__name__, "clear_existing_subgraphs")
 
     def execute(self, window_start):
+        print('random selection')
         # clear old gpickle graph files
         if os.path.exists('data/sub_graphs'):
             if self.clear_existing_subgraphs:
@@ -32,13 +33,9 @@ class random_selection(AbstractController):
         else:
             os.mkdir('data/sub_graphs')
         # execute random walk
-        print('read from full graph:')
         datasets = pd.read_csv('data/dataset_out/target_features.csv')['dataset_name'].tolist()
-        print("data sets: {}".format([i for i in datasets]))
         graph_id = 1
         for data in datasets:
-            print(bcolors.BOLD + bcolors.UNDERLINE + bcolors.OKBLUE + 'Dataset: ' + data
-                  + bcolors.ENDC + bcolors.ENDC + bcolors.ENDC)
             # if self.db.is_csv:
             #     full_graph = pd.read_csv('data/dataset_out/dataset_feature_correlation.csv')
             #     full_graph = full_graph.loc[full_graph['dataset_name'] == data + ".csv"].values.tolist()
@@ -50,30 +47,26 @@ class random_selection(AbstractController):
             graph_len = len(df.columns) - 1
             max_vertexes = int(graph_len * self.vertex_threshold)
             df = df.set_index(df.columns)
-            print('building full graph...')
             full_graph = nx.from_pandas_adjacency(df)
-            print('calculating invalid edges...')
             egdes_to_remove = [edge for edge in full_graph.edges
                                if full_graph[edge[0]][edge[1]]['weight'] < self.corr_threshold]
-            print('removing edges...')
             full_graph.remove_edges_from(egdes_to_remove)
             subgraphs_set = []
             # generate as many sub graphs as indicated in the config file
             nodes_count = len(full_graph.nodes) - 1
             g = 0
-            os.mkdir('data/sub_graphs/' + data)
+            # os.mkdir('data/sub_graphs/' + data)
             while g < self.num_of_subgraphs:
                 for i in range(int(nodes_count * self.vertex_threshold), nodes_count):
                     if g >= self.num_of_subgraphs:
                         break
-                    print('working on subgraph ' + str(graph_id))
                     sub = rnd.sample(list(full_graph.nodes), i)
                     sub = sorted(sub)
                     if sub in subgraphs_set:
                         continue
                     subgraphs_set.append(sub)
                     g1 = full_graph.subgraph(sub)
-                    nx.write_gpickle(g1, 'data/sub_graphs/' + data + '/subgraph' + str(graph_id) + '.gpickle')
+                    nx.write_gpickle(g1, 'data/sub_graphs/' + data + '_subgraph' + str(graph_id) + '.gpickle')
                     graph_id += 1
                     g += 1
                     # TODO: perform the random walk

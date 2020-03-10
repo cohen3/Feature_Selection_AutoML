@@ -22,10 +22,10 @@ def generate_degree_walk(Graph, walkSize):
 def random_walk_degree_labels(G, walkSize):
     cur_node = random.choice(list(G.nodes()))
     walk_list = []
-
     while len(walk_list) < walkSize:
         walk_list.append(G.nodes[cur_node]['label'])
-        cur_node = random.choice(list(G.neighbors(cur_node)))
+        if len(list(G.neighbors(cur_node))) > 0:
+            cur_node = random.choice(list(G.neighbors(cur_node)))
     return walk_list
 
 
@@ -52,7 +52,6 @@ def generate_walk_file(counter, dir_name, walk_length, alpha):
         os.mkdir(os.path.dirname(walk_dir_path))
     walk_dir_path = os.path.join(walk_dir_path, 'walk_file.walk')
     sub_graphs_path = os.path.join('data', 'sub_graphs')
-    print("out path = "+walk_dir_path)
     walk_file = open(walk_dir_path, 'w')
     index_to_name = {}
     range_to_labels = {(0, 0.05): 'z', (0.05, 0.1): 'a', (0.1, 0.15): 'b', (0.15, 0.2): 'c', (0.2, 0.25): 'd',
@@ -71,12 +70,8 @@ def generate_walk_file(counter, dir_name, walk_length, alpha):
 
 def structural_embedding(input_dir, iterations=20, dimensions=128, windowSize=2, dm=1, walkLength=64):
     # index_to_name = generate_walk_file(input_dir, walkLength, 0.5)
-    print("input dir = " + input_dir)
     walk_dir_path = input_dir.replace('sub_graphs', 'walks')
-    print("input dir 2 = "+input_dir)
-    print("walk_dir_0 = "+ walk_dir_path)
     walk_dir_path = (os.path.join(walk_dir_path,'walk_file.walk'))
-    print("walk path is "+walk_dir_path)
 
     sentences = doc.TaggedLineDocument(walk_dir_path)
 

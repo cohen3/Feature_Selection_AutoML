@@ -27,30 +27,30 @@ class algo_feature_selection(AbstractController):
     def setUp(self):
         self.clear_existing_subgraphs = getConfig().eval(self.__class__.__name__, "clear_existing_subgraphs")
         self.save_path = getConfig().eval(self.__class__.__name__, "save_path")
+        self.corr_threshold = getConfig().eval(self.__class__.__name__, "corr_threshold")
 
     def execute(self, window_start):
+        print('algo selection')
         # clear old gpickle graph files
         if os.path.exists('data/sub_graphs'):
             if self.clear_existing_subgraphs:
-                print('removing old subgraphs')
                 self.clear_graphs()
         else:
             os.mkdir('data/sub_graphs')
         # execute feature selection
-        print('read from full graph:')
         datasets = pd.read_csv('data/dataset_out/target_features.csv')['dataset_name'].tolist()
         for data in datasets:
-            if not os.path.exists('data/sub_graphs/' + data):
-                os.mkdir('data/sub_graphs/' + data)
-            print(bcolors.BOLD + bcolors.UNDERLINE + bcolors.OKBLUE + 'Dataset: ' + data
-                  + bcolors.ENDC + bcolors.ENDC + bcolors.ENDC)
+            # if not os.path.exists('data/sub_graphs/' + data):
+            #     os.mkdir('data/sub_graphs/' + data)
             input_df = pd.read_csv('data/dataset_in/' + data.split('_corr_graph')[0] + '.csv')
+            for c in input_df.columns:
+                if input_df[c].dtype != 'float64' and input_df[c].dtype != 'int64':
+                    input_df[c] = input_df[c].astype('category').cat.codes
             input_label = pd.read_csv('data/dataset_out/target_features.csv')
             input_label = input_label.loc[input_label['dataset_name'] == data]
             input_label = input_label[['target_feature']].values.tolist()[0][0]
             label_df = input_df[[input_label]]
             data_df = input_df.loc[:, input_df.columns != input_label]
-            counter = 0
             classifiers = {"SGDClassifier": SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,
                                                           random_state=0, tol=None),
                            "LinearSVC": LinearSVC(C=0.01, penalty="l1", dual=False),
@@ -60,17 +60,25 @@ class algo_feature_selection(AbstractController):
             k_best_funcs = {"f_classif": f_classif, "mutual_info_regression": mutual_info_regression,
                             "mutual_info_classif": mutual_info_classif}
             # ################################## Feature Selection Model #####################################
+            mega_counter = 1
             for clf_name in classifiers.keys():
                 counter = 0
                 clf = classifiers[clf_name].fit(data_df, label_df)
                 model = SelectFromModel(clf, prefit=True)
                 feature_idx = model.get_support().tolist()
                 indexes = [i for i, x in enumerate(feature_idx) if x is True]
-                graph = pd.read_csv('data/dataset_out/' + data + '.csv')
-                graph = graph.iloc[indexes, indexes]
-                graph = graph.set_index(graph.columns)
-                graph = nx.from_pandas_adjacency(graph)
-                nx.write_gpickle(graph, 'data/sub_graphs/' + data + '/subgraph_' + clf_name + str(counter) + '.gpickle')
+                # graph = pd.read_csv('data/dataset_out/' + data + '.csv')
+                # graph = graph.iloc[indexes, indexes]
+                # graph = graph.set_index(graph.columns)
+                # graph = nx.from_pandas_adjacency(graph)
+                # egdes_to_remove = [edge for edge in graph.edges
+                #                    if abs(graph[edge[0]][edge[1]]['weight']) > self.corr_threshold]
+                # graph.remove_edges_from(egdes_to_remove)
+                # if not os.path.exists('data/sub_graphs/' + data+'/'):
+                #     os.mkdir('data/sub_graphs/' + data+'/')
+                # input('data/sub_graphs/' + data + '_subgraph_' + str(mega_counter) + '.gpickle')
+                # nx.write_gpickle(graph, 'data/sub_graphs/' + data + '_subgraph_' + str(mega_counter) + '.gpickle')
+                mega_counter += 1
                 counter += 1
                 for idx in range(int(math.sqrt(len(indexes)) * 2)):
                     feats_to_remove = random.sample(indexes, int(len(indexes) / 3))
@@ -84,8 +92,12 @@ class algo_feature_selection(AbstractController):
                     graph = graph.iloc[indexes, indexes]
                     graph = graph.set_index(graph.columns)
                     graph = nx.from_pandas_adjacency(graph)
+                    egdes_to_remove = [edge for edge in graph.edges
+                                       if abs(graph[edge[0]][edge[1]]['weight']) > self.corr_threshold]
+                    graph.remove_edges_from(egdes_to_remove)
                     nx.write_gpickle(graph,
-                                     'data/sub_graphs/' + data + '/subgraph_' + clf_name + str(counter) + '.gpickle')
+                                     'data/sub_graphs/' + data + '_subgraph_' + clf_name + '_' + str(mega_counter) + '.gpickle')
+                    mega_counter += 1
                     counter += 1
 
             for func_name in k_best_funcs.keys():
@@ -99,7 +111,11 @@ class algo_feature_selection(AbstractController):
                 graph = graph.iloc[indexes, indexes]
                 graph = graph.set_index(graph.columns)
                 graph = nx.from_pandas_adjacency(graph)
-                nx.write_gpickle(graph, 'data/sub_graphs/' + data + '/subgraph' + func_name + str(counter) + '.gpickle')
+                egdes_to_remove = [edge for edge in graph.edges
+                                   if abs(graph[edge[0]][edge[1]]['weight']) > self.corr_threshold]
+                graph.remove_edges_from(egdes_to_remove)
+                nx.write_gpickle(graph, 'data/sub_graphs/' + data + '_subgraph_' + func_name + '_' + str(mega_counter) + '.gpickle')
+                mega_counter += 1
                 counter += 1
 
             # ################################## End Feature Selection Model #####################################
@@ -109,8 +125,9 @@ class algo_feature_selection(AbstractController):
         # for f in filelist:
         #     os.remove(os.path.join('data/sub_graphs', f))
         import shutil
-        shutil.rmtree("data/sub_graphs")
-        os.mkdir("data/sub_graphs")
+        shutil.rmtree("data/sub_graphs", ignore_errors=True)
+        if not os.path.exists("data/sub_graphs"):
+            os.mkdir("data/sub_graphs")
 
     def plot_graph(self, graph):
         elarge = [(u, v) for (u, v, d) in graph.edges(data=True) if d['weight'] > 0.8]

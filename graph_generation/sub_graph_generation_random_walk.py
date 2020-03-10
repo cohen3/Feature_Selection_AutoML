@@ -66,7 +66,7 @@ class random_walk(AbstractController):
                     #     print(i)
                     # x = input()
                     nx.write_gpickle(tree,
-                                     'data/sub_graphs/' + data + '/subgraph_' + 'tree' + str(graph_id) + '.gpickle')
+                                     'data/sub_graphs/' + data + '_subgraph_' + 'tree' + str(graph_id) + '.gpickle')
                     graph_id += 1
 
     def __graph_exist(self, nodes):
@@ -82,7 +82,7 @@ class random_walk(AbstractController):
                 if graph_id >= 200:
                     break
                 G = self.complete_graph_from_list(sub)
-                nx.write_gpickle(G, 'data/sub_graphs/' + name + '/subgraph_' + kind + str(graph_id) + '.gpickle')
+                nx.write_gpickle(G, 'data/sub_graphs/' + name + '_subgraph_' + kind + str(graph_id) + '.gpickle')
                 graph_id += 1
         except MemoryError as me:
             pass

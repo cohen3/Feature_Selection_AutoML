@@ -2,6 +2,7 @@ import csv
 import os
 import pickle
 import time
+import numpy as np
 
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
@@ -27,6 +28,7 @@ class test_dataset_cross_validation(AbstractController):
         full_dataset = pd.read_csv(self.data_path)
         output_file = os.path.join('data', 'dataset_cross_validation.csv')
         i = 1
+        preds = []
         with open(output_file, 'w', newline='') as f:
             writer = csv.DictWriter(f, fieldnames=['run_number', 'R-squared_score', 'test_dataset'])
             writer.writeheader()
@@ -47,10 +49,19 @@ class test_dataset_cross_validation(AbstractController):
                 model = rfc.fit(X_train, y_train)
 
                 pred1 = model.score(X_test, y_test)
+                preds.append(pred1)
                 writer.writerow({'run_number': i, 'R-squared_score': pred1,
                                  'test_dataset': test_dataset.split('_corr_graph')[0]})
                 print('{}: Score = {}\tTest dataset = {}'.format('run_'+str(i), pred1, test_dataset))
                 i += 1
+            writer.writerow({'run_number': 0, 'R-squared_score': float(sum(preds)/len(preds)),
+                             'test_dataset': 'avg'})
 
-
+    def r_squared(self, y_pred, y_true):
+        arr = y_true.to_list()
+        preds = list(y_pred)
+        ss_tot = sum(map(lambda x: (x - np.mean(arr)) ** 2, arr))
+        ss_res = sum(map(lambda x, y: (x - y) ** 2, arr, preds))
+        r_squared = 1 - ss_res / ss_tot
+        print(r_squared)
 

@@ -23,7 +23,8 @@ def random_walk(G, walkSize):
 
     while len(walk_list) < walkSize:
         walk_list.append(G.nodes[cur_node]['label'])
-        cur_node = random.choice(list(G.neighbors(cur_node)))
+        if len(list(G.neighbors(cur_node))) > 0:
+            cur_node = random.choice(list(G.neighbors(cur_node)))
     return walk_list
 
 

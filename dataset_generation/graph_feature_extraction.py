@@ -12,6 +12,7 @@ import pandasql as ps
 from sklearn.metrics import precision_score, recall_score, roc_curve, auc, accuracy_score, classification_report
 from sklearn.model_selection import train_test_split
 import math
+import numpy as np
 
 from configuration.configuration import getConfig
 from tool_kit.AbstractController import AbstractController
@@ -44,13 +45,17 @@ class structural_feature_extraction(AbstractController):
 
     def print_graph_features(self, graph):
         res = {}
-
+        deg_list = [i[1] for i in nx.degree(graph)]
+        weights_list = [graph[edge[0]][edge[1]]['weight'] for edge in graph.edges]
         res['connected'] = nx.is_connected(graph)
         res['density'] = '{:.6f}'.format(nx.density(graph))
         res['Avg_CC'] = nx.average_clustering(graph)
-        res['Avg_degree'] = '{:.6f}'.format(sum([i[1] for i in nx.degree(graph)]) / len(nx.degree(graph)))
-        res['Avg_weight'] = '{:.6f}'.format(sum([graph[edge[0]][edge[1]]['weight'] for edge in graph.edges]) / len(
-            [graph[edge[0]][edge[1]]['weight'] for edge in graph.edges]))
+        res['Median_deg'] = '{:.6f}'.format(np.median(deg_list))
+        res['Variance_deg'] = '{:.6f}'.format(np.var(deg_list))
+        res['Median_wights'] = '{:.6f}'.format(np.median(weights_list))
+        res['Variance_wights'] = '{:.6f}'.format(np.var(weights_list))
+        res['Avg_degree'] = '{:.6f}'.format(sum(deg_list) / len(nx.degree(graph)))
+        res['Avg_weight'] = '{:.6f}'.format(sum(weights_list) / len(weights_list))
         res['edges'] = len(graph.edges)
         res['nodes'] = len(graph.nodes)
         res['self_loops'] = len(list(nx.nodes_with_selfloops(graph)))
