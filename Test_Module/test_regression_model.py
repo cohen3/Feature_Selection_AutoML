@@ -23,8 +23,12 @@ class test_dataset_cross_validation(AbstractController):
         self.data_path = getConfig().eval(self.__class__.__name__, "data")
 
     def execute(self, window_start):
-        location = os.path.join('data', 'sub_graphs')
-        datasets = next(os.walk(location))[1]
+        # location = os.path.join('data', 'sub_graphs')
+        datasets_path = os.path.join('data', 'dataset_out', 'target_features.csv')
+        target = pd.read_csv(datasets_path)
+        datasets = target.dataset_name.tolist()
+        datasets = [dataset.split('_corr_')[0] for dataset in datasets]
+        # datasets = next(os.walk(location))[1]
         full_dataset = pd.read_csv(self.data_path)
         output_file = os.path.join('data', 'dataset_cross_validation.csv')
         i = 1

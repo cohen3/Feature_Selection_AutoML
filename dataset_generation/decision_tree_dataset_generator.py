@@ -78,6 +78,8 @@ class Decision_Tree(AbstractController):
             if df[target_feature].dtype != 'float64' and df[target_feature].dtype != 'int64':
                 df[target_feature] = df[target_feature].astype('category').cat.codes
         # split data to test and train
+        if target_feature in features:
+            raise ValueError('Label must not be in training X set')
         X_train, X_test, y_train, y_test = train_test_split(df[features], df[target_feature],
                                                             test_size=0.15, random_state=2)
         # read number of classes into dictionary

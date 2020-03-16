@@ -1,5 +1,6 @@
 import csv
 import os
+import sys
 import time
 
 from tool_kit.colors import bcolors
@@ -42,6 +43,9 @@ modules_dict['GA_Feature_Selection'] = GA_Feature_Selection
 modules_dict['test_dataset_cross_validation'] = test_dataset_cross_validation
 
 window_start = getConfig().eval("DEFAULT", "start_date")
+disable_prints = getConfig().eval("DEFAULT", "disable_prints")
+if disable_prints:
+    sys.stdout = open(os.devnull, 'w')
 newbmrk = os.path.isfile("benchmark.csv")
 bmrk_file = open("benchmark.csv", 'a', newline='')
 bmrk_results = csv.DictWriter(bmrk_file,
@@ -81,7 +85,8 @@ for module in pipeline:
 
 bmrk_results.writerow(bmrk)
 bmrk_file.flush()
-
+if disable_prints:
+    sys.stdout = sys.__stdout__
 # x = pipeline[0].execQuery('SELECT * FROM dataset_feature_correlation WHERE feature1=\'f1\'')
 # for record in x:
 #     print(record)

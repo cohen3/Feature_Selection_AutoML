@@ -49,7 +49,7 @@ class random_selection(AbstractController):
             df = df.set_index(df.columns)
             full_graph = nx.from_pandas_adjacency(df)
             egdes_to_remove = [edge for edge in full_graph.edges
-                               if full_graph[edge[0]][edge[1]]['weight'] < self.corr_threshold]
+                               if abs(full_graph[edge[0]][edge[1]]['weight']) > self.corr_threshold]
             full_graph.remove_edges_from(egdes_to_remove)
             subgraphs_set = []
             # generate as many sub graphs as indicated in the config file

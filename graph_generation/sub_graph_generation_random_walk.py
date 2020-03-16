@@ -44,7 +44,7 @@ class random_walk(AbstractController):
             full_graph = nx.from_pandas_adjacency(df)
             print('calculating invalid edges...')
             egdes_to_remove = [edge for edge in full_graph.edges
-                               if full_graph[edge[0]][edge[1]]['weight'] < self.corr_threshold]
+                               if abs(full_graph[edge[0]][edge[1]]['weight']) > self.corr_threshold]
             print('removing edges...')
             full_graph.remove_edges_from(egdes_to_remove)
             if self.method == 'clique' or self.method == 'all':
