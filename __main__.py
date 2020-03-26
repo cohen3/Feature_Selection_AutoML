@@ -10,7 +10,7 @@ from dataset_loader.loader import data_loader
 from graph_generation.full_graph_generation import graph_generation
 from graph_generation.sub_graph_generation_random_selection import random_selection
 from graph_generation.sub_graph_generation_random_walk import random_walk
-from graph_generation.graph_feature_extraction import graph_feature_extraction
+from dataset_generation.graph_feature_extraction import structural_feature_extraction
 from dataset_generation.xgboost_dataset_generator import xgboost_generator
 from dataset_generation.decision_tree_dataset_generator import Decision_Tree
 from regressor.xgboost_regressor import XgboostRegression
@@ -33,7 +33,7 @@ modules_dict['graph_generation'] = graph_generation
 modules_dict['algo_feature_selection'] = algo_feature_selection
 modules_dict['random_selection'] = random_selection
 modules_dict['random_walk'] = random_walk
-modules_dict['graph_feature_extraction'] = graph_feature_extraction
+modules_dict['structural_feature_extraction'] = structural_feature_extraction
 modules_dict['xgboost_generator'] = xgboost_generator
 modules_dict['Decision_Tree'] = Decision_Tree
 modules_dict['sub2vec'] = sub2vec
@@ -64,9 +64,11 @@ for module in getConfig().sections():
 
 bmrk = {"config": getConfig().getfilename(), "window_start": "setup"}
 for module in pipeline:
+    print(bcolors.YELLOW + 'Started setup ' + module.__class__.__name__ + bcolors.ENDC)
     T = time.perf_counter()
     module.setUp()
     T = time.perf_counter() - T
+    print(bcolors.YELLOW + 'Finished setup ' + module.__class__.__name__ + bcolors.ENDC)
     bmrk[module.__class__.__name__] = T
 
 bmrk_results.writerow(bmrk)

@@ -28,9 +28,9 @@ class Decision_Tree(AbstractController):
         self.dataset = getConfig().eval(self.__class__.__name__, "dataset")
         self.exclude_table_list = getConfig().eval(self.__class__.__name__, "exclude_table_list")
         self.labels = []
-        self.datasets = pd.read_csv('data/dataset_out/target_features.csv')['dataset_name'].tolist()
 
     def execute(self, window_start):
+        self.datasets = pd.read_csv('data/dataset_out/target_features.csv')['dataset_name'].tolist()
         with open(r'data/dataset.csv', 'w', newline='') as new_dataset:
             new_ds_reader = csv.writer(new_dataset, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             new_ds_reader.writerow(['graph_name', 'acc', 'time', 'average_weighted_F1'])

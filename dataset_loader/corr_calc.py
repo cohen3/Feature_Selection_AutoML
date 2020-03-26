@@ -13,6 +13,10 @@ def kendell(df):
     return df.corr(method="kendall")
 
 
+def spearman(df):
+    return df.corr(method="spearman")
+
+
 def cos_sim(df):
     # print(df.columns[0])
     # df = df.drop(df.columns[0], axis=1)

@@ -1,4 +1,5 @@
 import time
+import os
 from os import walk, listdir
 from os.path import isfile
 import warnings
@@ -26,28 +27,43 @@ warnings.filterwarnings(action='ignore', category=FutureWarning)
 class structural_feature_extraction(AbstractController):
     def __init__(self, db):
         AbstractController.__init__(self, db)
+        self.target = getConfig().eval(self.__class__.__name__, "target_attr")
+        self.fields = ['graph_name', 'connected', 'density', 'Avg_CC', 'Median_deg',
+                       'Variance_deg',
+                       'Avg_degree', 'Median_wights', 'Variance_wights',
+                       'Avg_weight', 'edges',
+                       'nodes', 'self_loops', 'edge_to_node_ratio',
+                       'negative_edges', 'target']
         self.db = db
 
     def setUp(self):
         pass
 
     def execute(self, window_start):
-        with open(r'data/dataset.csv', 'r', newline='') as dataset:
-            with open(r'data/full_dataset.csv', 'w', newline='') as ds_with_features:
-                old_df_reader = csv.writer(dataset, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                new_ds_writer = csv.writer(ds_with_features, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                new_ds_writer.writerow(['connected', 'density', 'time', 'Avg_CC', 'Avg_degree', 'Avg_weight',
-                                        'edges', 'nodes', 'self_loops', 'edge_to_node_ratio', 'negative_edges',
-                                        'target'])
-                for file in listdir('data/sub_graphs'):
-                    res = None
+        with open(os.path.join('data', 'dataset.csv'), 'r', newline='') as dataset:
+            with open(os.path.join('data', 'full_dataset.csv'), 'w', newline='') as ds_with_features:
+                old_df_reader = csv.DictReader(dataset, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                new_ds_writer = csv.DictWriter(ds_with_features, delimiter=',', quotechar='"',
+                                               quoting=csv.QUOTE_MINIMAL, fieldnames=self.fields)
+                new_ds_writer.writeheader()
+
+                for line in old_df_reader:
+                    graph_path = os.path.join('data', 'sub_graphs', line['graph_name'])
+                    g = nx.read_gpickle(graph_path)
+                    res = self.extract_graph_features(g)
+                    res['graph_name'] = line['graph_name']
+                    res['target'] = line[self.target]
                     new_ds_writer.writerow(res)
 
-    def print_graph_features(self, graph):
+    def extract_graph_features(self, graph):
+        """
+        ref: https://networkx.github.io/documentation/stable/_modules/networkx/algorithms/approximation/vertex_cover.html
+        ref: https://networkx.github.io/documentation/stable/reference/algorithms/approximation.html#module-networkx.algorithms.approximation
+        """
         res = {}
         deg_list = [i[1] for i in nx.degree(graph)]
         weights_list = [graph[edge[0]][edge[1]]['weight'] for edge in graph.edges]
-        res['connected'] = nx.is_connected(graph)
+        res['connected'] = 1 if nx.is_connected(graph) else 0
         res['density'] = '{:.6f}'.format(nx.density(graph))
         res['Avg_CC'] = nx.average_clustering(graph)
         res['Median_deg'] = '{:.6f}'.format(np.median(deg_list))
