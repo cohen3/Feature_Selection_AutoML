@@ -28,6 +28,8 @@ class algo_feature_selection(AbstractController):
         self.clear_existing_subgraphs = getConfig().eval(self.__class__.__name__, "clear_existing_subgraphs")
         self.save_path = getConfig().eval(self.__class__.__name__, "save_path")
         self.corr_threshold = getConfig().eval(self.__class__.__name__, "corr_threshold")
+        self.input_folder = getConfig().eval(self.__class__.__name__, "input_folder")
+        self.output_folder = getConfig().eval(self.__class__.__name__, "output_folder")
 
     def execute(self, window_start):
         print('algo selection')
@@ -42,7 +44,7 @@ class algo_feature_selection(AbstractController):
         for data in datasets:
             # if not os.path.exists('data/sub_graphs/' + data):
             #     os.mkdir('data/sub_graphs/' + data)
-            input_df = pd.read_csv('data/dataset_in/' + data.split('_corr_graph')[0] + '.csv')
+            input_df = pd.read_csv(os.path.join('data', self.input_folder, (data.split('_corr_graph')[0] + '.csv')))
             for c in input_df.columns:
                 if input_df[c].dtype != 'float64' and input_df[c].dtype != 'int64':
                     input_df[c] = input_df[c].astype('category').cat.codes
@@ -88,7 +90,7 @@ class algo_feature_selection(AbstractController):
                     model = SelectFromModel(clf, prefit=True)
                     feature_idx = model.get_support().tolist()
                     indexes = [i for i, x in enumerate(feature_idx) if x is True]
-                    graph = pd.read_csv('data/dataset_out/' + data + '.csv')
+                    graph = pd.read_csv(os.path.join('data', self.output_folder,(data+'.csv')))
                     graph = graph.iloc[indexes, indexes]
                     graph = graph.set_index(graph.columns)
                     graph = nx.from_pandas_adjacency(graph)
@@ -96,7 +98,8 @@ class algo_feature_selection(AbstractController):
                                        if abs(graph[edge[0]][edge[1]]['weight']) > self.corr_threshold]
                     graph.remove_edges_from(egdes_to_remove)
                     nx.write_gpickle(graph,
-                                     'data/sub_graphs/' + data + '_subgraph_' + clf_name + '_' + str(mega_counter) + '.gpickle')
+                                     'data/sub_graphs/' + data + '_subgraph_' + clf_name + '_' + str(
+                                         mega_counter) + '.gpickle')
                     mega_counter += 1
                     counter += 1
 
@@ -107,14 +110,15 @@ class algo_feature_selection(AbstractController):
                 model = model.fit(data_df_cpy, label_df)
                 feature_idx = model.get_support().tolist()
                 indexes = [i for i, x in enumerate(feature_idx) if x is True]
-                graph = pd.read_csv('data/dataset_out/' + data + '.csv')
+                graph = pd.read_csv(os.path.join('data', self.output_folder,(data+'.csv')))
                 graph = graph.iloc[indexes, indexes]
                 graph = graph.set_index(graph.columns)
                 graph = nx.from_pandas_adjacency(graph)
                 egdes_to_remove = [edge for edge in graph.edges
                                    if abs(graph[edge[0]][edge[1]]['weight']) > self.corr_threshold]
                 graph.remove_edges_from(egdes_to_remove)
-                nx.write_gpickle(graph, 'data/sub_graphs/' + data + '_subgraph_' + func_name + '_' + str(mega_counter) + '.gpickle')
+                nx.write_gpickle(graph, 'data/sub_graphs/' + data + '_subgraph_' + func_name + '_' + str(
+                    mega_counter) + '.gpickle')
                 mega_counter += 1
                 counter += 1
 

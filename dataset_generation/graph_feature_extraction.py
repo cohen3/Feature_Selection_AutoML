@@ -55,6 +55,12 @@ class structural_feature_extraction(AbstractController):
                     res['target'] = line[self.target]
                     new_ds_writer.writerow(res)
 
+    def vals_in_range(self, list, min, max):
+        counter = 0
+        for i in list:
+            if max > abs(i) > min:
+                counter += 1
+
     def extract_graph_features(self, graph):
         """
         ref: https://networkx.github.io/documentation/stable/_modules/networkx/algorithms/approximation/vertex_cover.html
@@ -72,12 +78,13 @@ class structural_feature_extraction(AbstractController):
         res['Variance_wights'] = '{:.6f}'.format(np.var(weights_list))
         res['Avg_degree'] = '{:.6f}'.format(sum(deg_list) / len(nx.degree(graph)))
         res['Avg_weight'] = '{:.6f}'.format(sum(weights_list) / len(weights_list))
+        res['Avg_weight_abs'] = '{:.6f}'.format(sum(abs(weights_list)) / len(weights_list))
         res['edges'] = len(graph.edges)
         res['nodes'] = len(graph.nodes)
         res['self_loops'] = len(list(nx.nodes_with_selfloops(graph)))
         res['edge_to_node_ratio'] = '{:.6f}'.format(len(graph.nodes) / len(graph.edges))
         res['negative_edges'] = len([edge for edge in graph.edges if graph[edge[0]][edge[1]]['weight'] < 0])
-
+        res['Num_of_zero_weights'] = len([e for e in graph.edges if 0.005 > abs(graph[e[0]][e[1]]['weight'] > 0)])
         return res
 
     def commit_results(self, graph_features, performance):
