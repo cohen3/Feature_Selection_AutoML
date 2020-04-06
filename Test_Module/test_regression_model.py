@@ -30,6 +30,7 @@ class test_dataset_cross_validation(AbstractController):
         datasets = [dataset.split('_corr_')[0] for dataset in datasets]
         # datasets = next(os.walk(location))[1]
         full_dataset = pd.read_csv(self.data_path)
+        print(full_dataset.head())
         output_file = os.path.join('data', 'dataset_cross_validation.csv')
         i = 1
         preds = []
@@ -42,6 +43,9 @@ class test_dataset_cross_validation(AbstractController):
 
                 filtered_df = filtered_df.drop('dataset_name', axis=1)
                 test_df = test_df.drop('dataset_name', axis=1)
+                if 'graph_name' in filtered_df.columns:
+                    filtered_df = filtered_df.drop('graph_name', axis=1)
+                    test_df = test_df.drop('graph_name', axis=1)
 
                 X_train = filtered_df.drop('target', axis=1)
                 y_train = filtered_df['target']

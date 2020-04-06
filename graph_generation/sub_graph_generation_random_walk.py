@@ -10,6 +10,7 @@ from tool_kit.colors import bcolors
 import pandas as pd
 import matplotlib.pyplot as plt
 import networkx as nx
+import networkx.algorithms.approximation as aprox
 from networkx.algorithms.clique import *
 from networkx.algorithms.traversal import *
 import random as rnd
@@ -25,8 +26,7 @@ class random_walk(AbstractController):
     def setUp(self):
         self.method = getConfig().eval(self.__class__.__name__, "method")
         self.corr_threshold = getConfig().eval(self.__class__.__name__, "corr_threshold")
-
-
+        self.walk = getConfig().eval(self.__class__.__name__, "random_walks")
 
     def execute(self, window_start):
         # execute random walk
@@ -47,16 +47,16 @@ class random_walk(AbstractController):
                                if abs(full_graph[edge[0]][edge[1]]['weight']) > self.corr_threshold]
             print('removing edges...')
             full_graph.remove_edges_from(egdes_to_remove)
-            if self.method == 'clique' or self.method == 'all':
+            if 'cliques' in self.method or 'all' in self.method:
                 print('finding cliques...')
                 cliques = nx.find_cliques(full_graph)
-                self.__save_subgraphs(cliques, data, 'clique')
-            if self.method == 'tree' or self.method == 'all':
+                self.__save_subgraphs(cliques, data, 'clique', full_graph)
+            if 'tree' in self.method or 'all' in self.method:
                 print('building trees...')
                 sources = random.choices(list(full_graph.nodes), k=int(len(list(full_graph.nodes))*0.01))
                 for node in sources:
                     tree = dfs_tree(full_graph, source=node, depth_limit=int(math.sqrt(len(full_graph))))
-                    tree = tree.to_undirected()
+                    tree = nx.subgraph(full_graph, list(tree.nodes))
                     # sub_graph = self.complete_graph_from_list(list(tree))
                     # pos = nx.spring_layout(tree)
                     # nx.draw_shell(tree)
@@ -68,11 +68,28 @@ class random_walk(AbstractController):
                     nx.write_gpickle(tree,
                                      'data/sub_graphs/' + data + '_subgraph_' + 'tree' + str(graph_id) + '.gpickle')
                     graph_id += 1
+            if 'walk' in self.method or 'all' in self.method:
+                print('random walk...')
+                for walk in range(self.walk):
+                    cur_node = random.choice(list(full_graph.nodes()))
+                    walk_list = []
+                    allowed_randoms = 10
+                    while allowed_randoms > 0:
+                        walk_list.append(cur_node)
+                        if len(list(full_graph.neighbors(cur_node))) > 0:
+                            cur_node = random.choice(list(full_graph.neighbors(cur_node)))
+                            if cur_node in walk_list:
+                                allowed_randoms -= 1
+                                continue
+                            allowed_randoms = 10
+                    sub = nx.subgraph(full_graph, walk_list)
+                    nx.write_gpickle(sub,
+                                     'data/sub_graphs/' + data + '_subgraph_' + 'walk' + str(graph_id) + '.gpickle')
 
     def __graph_exist(self, nodes):
         pass
 
-    def __save_subgraphs(self, graph_iter, name, kind):
+    def __save_subgraphs(self, graph_iter, name, kind, full_graph):
         graph_id = 1
         try:
             for sub in graph_iter:
@@ -81,7 +98,7 @@ class random_walk(AbstractController):
                     continue
                 if graph_id >= 200:
                     break
-                G = self.complete_graph_from_list(sub)
+                G = nx.subgraph(full_graph, sub)
                 nx.write_gpickle(G, 'data/sub_graphs/' + name + '_subgraph_' + kind + str(graph_id) + '.gpickle')
                 graph_id += 1
         except MemoryError as me:

@@ -22,10 +22,14 @@ class RandomForestReg(AbstractController):
 
     def execute(self, window_start):
         df = pd.read_csv(self.data_path)
+        if 'graph_name' in df.columns:
+            df = df.drop('graph_name', axis=1)
+        if 'dataset_name' in df.columns:
+            df = df.drop('dataset_name', axis=1)
+        df = self.preprocess(df)
         X = df.drop('target', axis=1)
         Y = df['target']
         X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.3, random_state=2)
-
         rfc = RandomForestRegressor(n_jobs=-1, random_state=22)
         # score = cross_val_score(rfc, X, Y, n_jobs=-1)
         model = rfc.fit(X_train, y_train)
@@ -65,5 +69,14 @@ class RandomForestReg(AbstractController):
         print('key: {}\nval: {}'.format(key[0], key[1]))
         print('@@@'*20)
         print(scores)
+
+    def preprocess(self, df):
+        # categorical values to numeric codes
+        for c in df.columns:
+            if df[c].dtype != 'float64' and df[c].dtype != 'int64':
+                df[c] = df[c].astype('category').cat.codes
+        # TODO: how should we preprocess categorial values?
+
+        return df
 
 

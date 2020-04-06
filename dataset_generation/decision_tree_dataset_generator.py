@@ -93,7 +93,7 @@ class Decision_Tree(AbstractController):
         return X_train, X_test, y_train, y_test, self.num_class[dataset_name]
 
     def __fit(self, X_train, X_test, Y_train, y_test, num):
-        clf = DecisionTreeClassifier()
+        clf = DecisionTreeClassifier(random_state=23)
 
         start = time.perf_counter()
         clf = clf.fit(X_train, Y_train)

@@ -6,7 +6,7 @@ import warnings
 import csv
 import xgboost as xgb
 import networkx as nx
-import networkx.algorithms.approximation as algo
+import networkx.algorithms.approximation as aprox
 import matplotlib.pyplot as plt
 import pandas as pd
 import pandasql as ps
@@ -28,12 +28,12 @@ class structural_feature_extraction(AbstractController):
     def __init__(self, db):
         AbstractController.__init__(self, db)
         self.target = getConfig().eval(self.__class__.__name__, "target_attr")
-        self.fields = ['graph_name', 'connected', 'density', 'Avg_CC', 'Median_deg',
+        self.fields = ['graph_name', 'dataset_name', 'connected', 'density', 'Avg_CC', 'Median_deg',
                        'Variance_deg',
                        'Avg_degree', 'Median_wights', 'Variance_wights',
-                       'Avg_weight', 'edges',
-                       'nodes', 'self_loops', 'edge_to_node_ratio',
-                       'negative_edges', 'target']
+                       'Avg_weight', 'Avg_weight_abs', 'edges',
+                       'nodes', 'self_loops', 'edge_to_node_ratio', 'Num_of_zero_weights',
+                       'negative_edges', 'min_vc', 'target']
         self.db = db
 
     def setUp(self):
@@ -41,17 +41,22 @@ class structural_feature_extraction(AbstractController):
 
     def execute(self, window_start):
         with open(os.path.join('data', 'dataset.csv'), 'r', newline='') as dataset:
-            with open(os.path.join('data', 'full_dataset.csv'), 'w', newline='') as ds_with_features:
+            with open(os.path.join('data', 'full_dataset_test.csv'), 'w', newline='') as ds_with_features:
                 old_df_reader = csv.DictReader(dataset, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 new_ds_writer = csv.DictWriter(ds_with_features, delimiter=',', quotechar='"',
                                                quoting=csv.QUOTE_MINIMAL, fieldnames=self.fields)
                 new_ds_writer.writeheader()
 
                 for line in old_df_reader:
+                    print(line['graph_name'])
                     graph_path = os.path.join('data', 'sub_graphs', line['graph_name'])
                     g = nx.read_gpickle(graph_path)
                     res = self.extract_graph_features(g)
+                    if not res:
+                        continue
+
                     res['graph_name'] = line['graph_name']
+                    res['dataset_name'] = line['graph_name'].split('_cor')[0]
                     res['target'] = line[self.target]
                     new_ds_writer.writerow(res)
 
@@ -69,22 +74,27 @@ class structural_feature_extraction(AbstractController):
         res = {}
         deg_list = [i[1] for i in nx.degree(graph)]
         weights_list = [graph[edge[0]][edge[1]]['weight'] for edge in graph.edges]
+        # try:
+        #     weights_list = [graph[edge[0]][edge[1]]['weight'] for edge in graph.edges]
+        # except:
+        #     return None
         res['connected'] = 1 if nx.is_connected(graph) else 0
         res['density'] = '{:.6f}'.format(nx.density(graph))
-        res['Avg_CC'] = nx.average_clustering(graph)
+        res['Avg_CC'] = aprox.average_clustering(graph)
         res['Median_deg'] = '{:.6f}'.format(np.median(deg_list))
         res['Variance_deg'] = '{:.6f}'.format(np.var(deg_list))
         res['Median_wights'] = '{:.6f}'.format(np.median(weights_list))
         res['Variance_wights'] = '{:.6f}'.format(np.var(weights_list))
         res['Avg_degree'] = '{:.6f}'.format(sum(deg_list) / len(nx.degree(graph)))
         res['Avg_weight'] = '{:.6f}'.format(sum(weights_list) / len(weights_list))
-        res['Avg_weight_abs'] = '{:.6f}'.format(sum(abs(weights_list)) / len(weights_list))
+        res['Avg_weight_abs'] = '{:.6f}'.format(abs(sum(weights_list) / len(weights_list)))
         res['edges'] = len(graph.edges)
         res['nodes'] = len(graph.nodes)
         res['self_loops'] = len(list(nx.nodes_with_selfloops(graph)))
         res['edge_to_node_ratio'] = '{:.6f}'.format(len(graph.nodes) / len(graph.edges))
         res['negative_edges'] = len([edge for edge in graph.edges if graph[edge[0]][edge[1]]['weight'] < 0])
         res['Num_of_zero_weights'] = len([e for e in graph.edges if 0.005 > abs(graph[e[0]][e[1]]['weight'] > 0)])
+        res['min_vc'] = len(aprox.min_weighted_vertex_cover(graph))
         return res
 
     def commit_results(self, graph_features, performance):

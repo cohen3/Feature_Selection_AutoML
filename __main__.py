@@ -21,6 +21,7 @@ from DB.csv_db import CSV_DB
 from regressor.RF_Regressor import RandomForestReg
 from DB.schema_definition import DB
 from graph_generation.sub_graph_generation_algo_feature_selection import algo_feature_selection
+from prediction.challenge import challenge_prediction
 
 modules_dict = {}
 
@@ -41,6 +42,7 @@ modules_dict['RandomForestReg'] = RandomForestReg
 modules_dict['XgboostRegression'] = XgboostRegression
 modules_dict['GA_Feature_Selection'] = GA_Feature_Selection
 modules_dict['test_dataset_cross_validation'] = test_dataset_cross_validation
+modules_dict['challenge_prediction'] = challenge_prediction
 
 window_start = getConfig().eval("DEFAULT", "start_date")
 disable_prints = getConfig().eval("DEFAULT", "disable_prints")
