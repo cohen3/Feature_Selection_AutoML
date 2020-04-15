@@ -31,20 +31,24 @@ class Decision_Tree(AbstractController):
 
     def execute(self, window_start):
         self.datasets = pd.read_csv('data/dataset_out/target_features.csv')['dataset_name'].tolist()
-        with open(r'data/dataset.csv', 'w', newline='') as new_dataset:
-            new_ds_reader = csv.writer(new_dataset, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            new_ds_reader.writerow(['graph_name', 'acc', 'time', 'average_weighted_F1'])
-            for file in listdir('data/sub_graphs'):
-                file_path = join('data', 'sub_graphs', file)
-                graph = nx.read_gpickle(file_path)
-                # graph_features = self.print_graph_features(graph)
-                # self.plot_graph(graph)
-                dataset_name = file.split('_corr_graph')[0]
-                X_train, X_test, y_train, y_test, num = self.prepare_dataset(dataset_name, graph)
-                res = self.__fit(X_train, X_test, y_train, y_test, self.num_class[dataset_name])
-                # 'accuracy', 'macro avg', 'weighted avg'
-                new_ds_reader.writerow([file, res['accuracy'],
-                                        res['train_time'], res['average_weighted_F1']])
+        with open('data/log.txt', 'w') as log:
+            with open(r'data/dataset.csv', 'w', newline='') as new_dataset:
+                new_ds_reader = csv.writer(new_dataset, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                new_ds_reader.writerow(['graph_name', 'acc', 'time', 'average_weighted_F1'])
+                for file in listdir('data/sub_graphs'):
+                    log.write('starting {}\n'.format(file))
+                    file_path = join('data', 'sub_graphs', file)
+                    graph = nx.read_gpickle(file_path)
+                    # graph_features = self.print_graph_features(graph)
+                    # self.plot_graph(graph)
+                    dataset_name = file.split('_corr_graph')[0]
+                    X_train, X_test, y_train, y_test, num = self.prepare_dataset(dataset_name, graph)
+                    res = self.__fit(X_train, X_test, y_train, y_test, self.num_class[dataset_name])
+                    # 'accuracy', 'macro avg', 'weighted avg'
+                    print(file)
+                    new_ds_reader.writerow([file, res['accuracy'],
+                                            res['train_time'], res['average_weighted_F1']])
+                    log.write('done {}\n'.format(file))
 
 
             # self.commit_results(graph_features, res)
@@ -82,14 +86,6 @@ class Decision_Tree(AbstractController):
             raise ValueError('Label must not be in training X set')
         X_train, X_test, y_train, y_test = train_test_split(df[features], df[target_feature],
                                                             test_size=0.15, random_state=2)
-        # read number of classes into dictionary
-        # if dataset_name not in self.num_class:
-        #     if not self.db.is_csv:
-        #         q1 = "SELECT COUNT(DISTINCT "+target_feature+") as num FROM df "
-        #         q2 = "SELECT DISTINCT "+target_feature+" as classes FROM df "
-        #         num = ps.sqldf(q1, locals())
-        #         classes = ps.sqldf(q2, locals())
-        #         self.labels = ['{}'.format(i) for i in list(classes['classes'].values)]
         return X_train, X_test, y_train, y_test, self.num_class[dataset_name]
 
     def __fit(self, X_train, X_test, Y_train, y_test, num):

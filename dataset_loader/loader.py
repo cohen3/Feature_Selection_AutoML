@@ -30,7 +30,12 @@ class data_loader(AbstractController):
                                                                          df.shape[1],
                                                                          df.shape[0]))
             method_to_call = getattr(dataset_loader.corr_calc, self.corr_method)
-            features_df = df.drop(df.columns[-1], axis=1)
+            if 'class' in df.columns:
+                features_df = df.drop('class', axis=1)
+            elif 'target' in df.columns:
+                features_df = df.drop('target', axis=1)
+            else:
+                features_df = df.drop(df.columns[-1], axis=1)
 
             # creates a full graph (corr matrix)
             try:
@@ -40,7 +45,12 @@ class data_loader(AbstractController):
                 print("is nan: ".format(np.where(np.isnan(df))))
                 continue
             self.targets["dataset_name"].append(str(os.path.splitext(file)[0])+'_corr_graph')
-            self.targets["target_feature"].append(df.columns[-1])
+            if 'target' in df.columns:
+                self.targets["target_feature"].append('target')
+            elif 'class' in df.columns:
+                self.targets["target_feature"].append('class')
+            else:
+                self.targets["target_feature"].append(df.columns[-1])
             # builtin {‘pearson’, ‘kendall’, ‘spearman’}
 
     def preprocess(self, df):

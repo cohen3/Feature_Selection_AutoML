@@ -26,6 +26,7 @@ class RandomForestReg(AbstractController):
             df = df.drop('graph_name', axis=1)
         if 'dataset_name' in df.columns:
             df = df.drop('dataset_name', axis=1)
+        df = df.drop_duplicates()
         df = self.preprocess(df)
         X = df.drop('target', axis=1)
         Y = df['target']

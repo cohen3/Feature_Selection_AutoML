@@ -21,6 +21,8 @@ class challenge_prediction(AbstractController):
         self.feature_set_in = getConfig().eval(self.__class__.__name__, "feature_set_in")
         self.results_out = getConfig().eval(self.__class__.__name__, "results_out")
         self.model_path = getConfig().eval(self.__class__.__name__, "model_path")
+        self.path_to_truth = getConfig().eval(self.__class__.__name__, "path_to_truth")
+        self.eval_only = getConfig().eval(self.__class__.__name__, "eval_only")
 
     def preprocess(self, df):
         # categorical values to numeric codes
@@ -32,8 +34,12 @@ class challenge_prediction(AbstractController):
         return df
 
     def execute(self, window_start):
+
+        if self.eval_only:
+            self.__get_eval()
+            return
         for i in range(1, 6, 1):
-            test_path = os.path.join(self.feature_set_in, 'testset_'+str(i)+'.csv')
+            test_path = os.path.join(self.feature_set_in, 'testset_' + str(i) + '.csv')
             dataset_path = os.path.join(self.dataset, 'cm_' + str(i) + '.csv')
 
             df = pd.read_csv(dataset_path)
@@ -56,12 +62,13 @@ class challenge_prediction(AbstractController):
                     scores.append((line, score))
                 res = sorted(scores, key=lambda item: item[1], reverse=True)
 
-                with open(os.path.join(self.results_out, 'res_test_'+str(i)+'.csv'), 'w', newline='') as res_file:
+                with open(os.path.join(self.results_out, 'res_test_' + str(i) + '.csv'), 'w', newline='') as res_file:
                     score_file = csv.DictWriter(res_file, delimiter=',', quotechar='"',
                                                 quoting=csv.QUOTE_MINIMAL, fieldnames=['features', 'score'])
                     score_file.writeheader()
                     for line in res:
                         score_file.writerow({'features': line[0], 'score': line[1]})
+        self.__get_eval()
 
     def _extract_features_for_subgraph(self, graph):
         res = {}
@@ -92,4 +99,31 @@ class challenge_prediction(AbstractController):
         model = pickle.load(open(self.model_path, 'rb'))
         pred = model.predict(X_test)
         return pred[0]
+
+    def __get_eval(self):
+        list_of_corrs = list()
+        for i in [1, 2, 3, 4, 5]:
+            path_expected = self.path_to_truth + 'sol_groundtruth_{}.csv'.format(i)
+            path_actual = os.path.join('data', 'datasets_fs_out', 'res_test_{}.csv'.format(i))
+
+            truth_df = pd.read_csv(path_expected)
+            actual_df = pd.read_csv(path_actual)
+
+            eval_df = pd.DataFrame()
+            eval_df['expected'] = truth_df['Subgraph']
+            eval_df['actual'] = actual_df['features']
+            eval_df['actual'] = eval_df['actual'].apply(lambda x: x[2:-2])
+
+            res = eval_df['actual'].corr(eval_df['expected'], method="spearman")
+            # res.to_csv(os.path.join('data', 'challenge.csv'), index=False)
+            # print(res.head())
+            print('test set num: {}, spearman: {}'.format(i, res))
+            list_of_corrs.append(res)
+        print('avg spearman: {}'.format(sum(list_of_corrs)/len(list_of_corrs)))
+        with open(os.path.join('data', 'challenge_spearman.csv'), "w", newline='') as challenge:
+            challenge = csv.DictWriter(challenge, fieldnames=['testset_num', 'corr'])
+            challenge.writeheader()
+            for i in [1, 2, 3, 4, 5]:
+                challenge.writerow({'testset_num': i, 'corr': list_of_corrs[i-1]})
+            challenge.writerow({'testset_num': 'avg', 'corr': sum(list_of_corrs)/len(list_of_corrs)})
 
