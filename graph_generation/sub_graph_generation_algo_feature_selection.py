@@ -62,26 +62,12 @@ class algo_feature_selection(AbstractController):
             k_best_funcs = {"f_classif": f_classif, "mutual_info_regression": mutual_info_regression,
                             "mutual_info_classif": mutual_info_classif}
             # ################################## Feature Selection Model #####################################
-            mega_counter = 1
+            generated_graph_counter = 1
             for clf_name in classifiers.keys():
-                counter = 0
                 clf = classifiers[clf_name].fit(data_df, label_df)
                 model = SelectFromModel(clf, prefit=True)
                 feature_idx = model.get_support().tolist()
                 indexes = [i for i, x in enumerate(feature_idx) if x is True]
-                # graph = pd.read_csv('data/dataset_out/' + data + '.csv')
-                # graph = graph.iloc[indexes, indexes]
-                # graph = graph.set_index(graph.columns)
-                # graph = nx.from_pandas_adjacency(graph)
-                # egdes_to_remove = [edge for edge in graph.edges
-                #                    if abs(graph[edge[0]][edge[1]]['weight']) > self.corr_threshold]
-                # graph.remove_edges_from(egdes_to_remove)
-                # if not os.path.exists('data/sub_graphs/' + data+'/'):
-                #     os.mkdir('data/sub_graphs/' + data+'/')
-                # input('data/sub_graphs/' + data + '_subgraph_' + str(mega_counter) + '.gpickle')
-                # nx.write_gpickle(graph, 'data/sub_graphs/' + data + '_subgraph_' + str(mega_counter) + '.gpickle')
-                mega_counter += 1
-                counter += 1
                 for idx in range(int(math.sqrt(len(indexes)) * 2)):
                     feats_to_remove = random.sample(indexes, int(len(indexes) / 3))
                     data_df_cpy = data_df.copy()
@@ -99,28 +85,25 @@ class algo_feature_selection(AbstractController):
                     graph.remove_edges_from(egdes_to_remove)
                     nx.write_gpickle(graph,
                                      'data/sub_graphs/' + data + '_subgraph_' + clf_name + '_' + str(
-                                         mega_counter) + '.gpickle')
-                    mega_counter += 1
-                    counter += 1
-
+                                         generated_graph_counter) + '.gpickle')
+                    generated_graph_counter += 1
+            # iterate over all k_best_funcs
             for func_name in k_best_funcs.keys():
-                counter = 0
                 data_df_cpy = data_df.copy()
-                model = SelectKBest(k_best_funcs[func_name], k=int(data_df_cpy.shape[1] / 3))
+                model = SelectKBest(k_best_funcs[func_name], k=int(data_df_cpy.shape[1] / 3)) # create a model based on the func
                 model = model.fit(data_df_cpy, label_df)
-                feature_idx = model.get_support().tolist()
+                feature_idx = model.get_support().tolist()  # get index of best features
                 indexes = [i for i, x in enumerate(feature_idx) if x is True]
-                graph = pd.read_csv(os.path.join('data', self.output_folder,(data+'.csv')))
-                graph = graph.iloc[indexes, indexes]
+                graph = pd.read_csv(os.path.join('data', self.output_folder, (data+'.csv')))
+                graph = graph.iloc[indexes, indexes] # create matrix of subgraph based on indexes
                 graph = graph.set_index(graph.columns)
-                graph = nx.from_pandas_adjacency(graph)
+                graph = nx.from_pandas_adjacency(graph) # create graph from matrix
                 egdes_to_remove = [edge for edge in graph.edges
-                                   if abs(graph[edge[0]][edge[1]]['weight']) > self.corr_threshold]
+                                   if abs(graph[edge[0]][edge[1]]['weight']) > self.corr_threshold] #remove unwanted edges
                 graph.remove_edges_from(egdes_to_remove)
                 nx.write_gpickle(graph, 'data/sub_graphs/' + data + '_subgraph_' + func_name + '_' + str(
-                    mega_counter) + '.gpickle')
-                mega_counter += 1
-                counter += 1
+                    generated_graph_counter) + '.gpickle')
+                generated_graph_counter += 1
 
             # ################################## End Feature Selection Model #####################################
 
