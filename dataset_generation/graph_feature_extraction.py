@@ -18,6 +18,7 @@ import numpy as np
 from configuration.configuration import getConfig
 from tool_kit.AbstractController import AbstractController
 from tool_kit.colors import bcolors
+from tool_kit.log_utils import get_exclude_list
 
 warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 warnings.filterwarnings(action='ignore', category=UserWarning)
@@ -28,6 +29,7 @@ class structural_feature_extraction(AbstractController):
     def __init__(self, db):
         AbstractController.__init__(self, db)
         self.target = getConfig().eval(self.__class__.__name__, "target_attr")
+        self.append_new_graphs = getConfig().eval(self.__class__.__name__, "append_new_graphs")
         self.fields = ['graph_name', 'dataset_name', 'connected', 'density', 'Avg_CC', 'Median_deg',
                        'Variance_deg',
                        'Avg_degree', 'Median_wights', 'Variance_wights',
@@ -40,14 +42,22 @@ class structural_feature_extraction(AbstractController):
         pass
 
     def execute(self, window_start):
+        file_mode = 'w'
+        if self.append_new_graphs:
+            file_mode = 'a'
+            self.exclude_list = get_exclude_list(os.path.join('data', 'loader_log.csv'))
         with open(os.path.join('data', 'dataset.csv'), 'r', newline='') as dataset:
-            with open(os.path.join('data', 'full_dataset_test.csv'), 'w', newline='') as ds_with_features:
+            with open(os.path.join('data', 'full_dataset_test.csv'), file_mode, newline='') as ds_with_features:
                 old_df_reader = csv.DictReader(dataset, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 new_ds_writer = csv.DictWriter(ds_with_features, delimiter=',', quotechar='"',
                                                quoting=csv.QUOTE_MINIMAL, fieldnames=self.fields)
-                new_ds_writer.writeheader()
+                if not self.append_new_graphs:
+                    new_ds_writer.writeheader()
 
                 for line in old_df_reader:
+                    if self.append_new_graphs and line['graph_name'].split('_corr')[0]+'.csv' in self.exclude_list:
+                        print('skipping: ', line['graph_name'])
+                        continue
                     print(line['graph_name'])
                     graph_path = os.path.join('data', 'sub_graphs', line['graph_name'])
                     g = nx.read_gpickle(graph_path)
@@ -59,6 +69,7 @@ class structural_feature_extraction(AbstractController):
                     res['dataset_name'] = line['graph_name'].split('_cor')[0]
                     res['target'] = line[self.target]
                     new_ds_writer.writerow(res)
+                    ds_with_features.flush()
 
     def vals_in_range(self, list, min, max):
         counter = 0
@@ -74,6 +85,8 @@ class structural_feature_extraction(AbstractController):
         res = {}
         deg_list = [i[1] for i in nx.degree(graph)]
         weights_list = [graph[edge[0]][edge[1]]['weight'] for edge in graph.edges]
+        if len(weights_list) == 0:
+            return None
         # try:
         #     weights_list = [graph[edge[0]][edge[1]]['weight'] for edge in graph.edges]
         # except:

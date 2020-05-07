@@ -9,12 +9,14 @@ from configuration.configuration import getConfig
 from tool_kit.AbstractController import AbstractController
 from tool_kit.colors import bcolors
 import dataset_loader.corr_calc
+from tool_kit.log_utils import get_exclude_list
 
 class data_loader(AbstractController):
 
     def __init__(self, db):
         AbstractController.__init__(self, db)
         self.db = db
+        self.continue_from_log = getConfig().eval(self.__class__.__name__, "continue_from_log")
         self.csv_data_path = getConfig().eval(self.__class__.__name__, "csv_data_path")
         self.corr_method = getConfig().eval(self.__class__.__name__, "corr_function")
         self.data_files = [f for f in listdir(self.csv_data_path) if isfile(join(self.csv_data_path, f))]
@@ -22,7 +24,12 @@ class data_loader(AbstractController):
         self.targets = {"dataset_name": [], "target_feature": []}
 
     def setUp(self):
+        if self.continue_from_log:
+            exclusion_list = get_exclude_list(os.path.join('data', 'loader_log.csv'))
         for file in self.data_files:
+            if self.continue_from_log and file in exclusion_list:
+                print('skipped: ', file)
+                continue
             df = pd.read_csv(join(self.csv_data_path, file))
             df = self.preprocess(df)
             # print(os.path.splitext(file)[0] + '_corr_graph\ntarget:' + df.columns[-1])

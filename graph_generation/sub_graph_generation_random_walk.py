@@ -15,6 +15,8 @@ from networkx.algorithms.clique import *
 from networkx.algorithms.traversal import *
 import random as rnd
 
+from tool_kit.log_utils import get_exclude_list
+
 
 class random_walk(AbstractController):
 
@@ -27,6 +29,7 @@ class random_walk(AbstractController):
         self.method = getConfig().eval(self.__class__.__name__, "method")
         self.corr_threshold = getConfig().eval(self.__class__.__name__, "corr_threshold")
         self.walk = getConfig().eval(self.__class__.__name__, "random_walks")
+        self.continue_from_log = getConfig().eval(self.__class__.__name__, "continue_from_log")
 
     def execute(self, window_start):
         # execute random walk
@@ -34,7 +37,12 @@ class random_walk(AbstractController):
         datasets = pd.read_csv('data/dataset_out/target_features.csv')['dataset_name'].tolist()
         print("data sets: {}".format([i for i in datasets]))
         graph_id = 1
+        if self.continue_from_log:
+            exclusion_list = get_exclude_list(os.path.join('data', 'loader_log.csv'))
         for data in datasets:
+            if self.continue_from_log and data.replace('_corr_graph', '.csv') in exclusion_list:
+                print('skipped: ', data)
+                continue
             print(bcolors.BOLD + bcolors.UNDERLINE + bcolors.OKBLUE + 'Dataset: ' + data
                   + bcolors.ENDC + bcolors.ENDC + bcolors.ENDC)
             # calculate number of max vertexes

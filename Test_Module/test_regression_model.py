@@ -4,6 +4,7 @@ import pickle
 import time
 import numpy as np
 
+from xgboost import XGBRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 
@@ -21,6 +22,7 @@ class test_dataset_cross_validation(AbstractController):
 
     def setUp(self):
         self.data_path = getConfig().eval(self.__class__.__name__, "data")
+        self.model = getConfig().eval(self.__class__.__name__, "model")
 
     def execute(self, window_start):
         # location = os.path.join('data', 'sub_graphs')
@@ -53,7 +55,10 @@ class test_dataset_cross_validation(AbstractController):
                 X_test = test_df.drop('target', axis=1)
                 y_test = test_df['target']
 
-                rfc = RandomForestRegressor(n_jobs=-1, random_state=22)
+                if self.model == 'xgboost':
+                    rfc = XGBRegressor(n_jobs=-1, n_estimators=1024, objective='reg:squarederror')
+                else:
+                    rfc = RandomForestRegressor(n_jobs=-1, random_state=22, n_estimators=1024)
                 model = rfc.fit(X_train, y_train)
 
                 pred1 = model.score(X_test, y_test)

@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import random as rnd
 
+from tool_kit.log_utils import get_exclude_list
+
 
 class random_selection(AbstractController):
 
@@ -22,6 +24,7 @@ class random_selection(AbstractController):
         # self.dataset_table = getConfig().eval(self.__class__.__name__, "dataset_table")
         self.num_of_subgraphs = getConfig().eval(self.__class__.__name__, "num_of_subgraphs_each")
         self.clear_existing_subgraphs = getConfig().eval(self.__class__.__name__, "clear_existing_subgraphs")
+        self.continue_from_log = getConfig().eval(self.__class__.__name__, "continue_from_log")
 
     def execute(self, window_start):
         print('random selection')
@@ -32,10 +35,15 @@ class random_selection(AbstractController):
                 self.clear_graphs()
         else:
             os.mkdir('data/sub_graphs')
+        if self.continue_from_log:
+            exclusion_list = get_exclude_list(os.path.join('data', 'loader_log.csv'))
         # execute random walk
         datasets = pd.read_csv('data/dataset_out/target_features.csv')['dataset_name'].tolist()
         graph_id = 1
         for data in datasets:
+            if self.continue_from_log and data.replace('_corr_graph', '.csv') in exclusion_list:
+                print('skipped: ', data)
+                continue
             # if self.db.is_csv:
             #     full_graph = pd.read_csv('data/dataset_out/dataset_feature_correlation.csv')
             #     full_graph = full_graph.loc[full_graph['dataset_name'] == data + ".csv"].values.tolist()

@@ -30,8 +30,8 @@ class RandomForestReg(AbstractController):
         df = self.preprocess(df)
         X = df.drop('target', axis=1)
         Y = df['target']
-        X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.3, random_state=2)
-        rfc = RandomForestRegressor(n_jobs=-1, random_state=22)
+        X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.1)
+        rfc = RandomForestRegressor(n_jobs=-1, random_state=22, n_estimators=2048)
         # score = cross_val_score(rfc, X, Y, n_jobs=-1)
         model = rfc.fit(X_train, y_train)
         pred1 = model.score(X_test, y_test)
@@ -53,6 +53,7 @@ class RandomForestReg(AbstractController):
         filename = os.path.join(self.out_path, 'RF_regression_model.dat')
         pickle.dump(model, open(filename, 'wb'))
         print('model at: {}'.format(filename))
+        # self.__test_results(model)
 
     def __get_best_state(self, X_train, X_test, y_train, y_test):
         import operator
@@ -80,4 +81,50 @@ class RandomForestReg(AbstractController):
 
         return df
 
+    def __test_results(self, model):
+        import networkx as nx
+        df = pd.read_csv(self.data_path)
+        df2 = pd.read_csv(self.data_path).drop('graph_name', axis=1).drop('dataset_name', axis=1).drop('target', axis=1)
+        for index, row in df.iterrows():
+            graph = nx.read_gpickle(os.path.join('data', 'sub_graphs', row['graph_name']))
+            res = self._extract_features_for_subgraph(graph)
+            res = pd.DataFrame.from_dict(res)
+            l1 = list()
+            l2 = list()
+            for c in res.columns:
+                l1.append(df2.iloc[index][c])
+                l2.append(res.iloc[0][c])
+            print(l1)
+            print(l2)
+            print(model.predict(df2)[index])
+            print(model.predict(res)[0])
+            x=input()
+
+    def _extract_features_for_subgraph(self, graph):
+        import networkx as nx
+        import networkx.algorithms.approximation as aprox
+        import numpy as np
+        res = {}
+        deg_list = [i[1] for i in nx.degree(graph)]
+        weights_list = [graph[edge[0]][edge[1]]['weight'] for edge in graph.edges]
+        res['connected'] = [1 if nx.is_connected(graph) else 0]
+        res['density'] = ['{:.6f}'.format(nx.density(graph))]
+        res['Avg_CC'] = [aprox.average_clustering(graph)]
+        res['Median_deg'] = ['{:.6f}'.format(np.median(deg_list))]
+        res['Variance_deg'] = ['{:.6f}'.format(np.var(deg_list))]
+        res['Median_wights'] = ['{:.6f}'.format(np.median(weights_list))]
+        res['Variance_wights'] = ['{:.6f}'.format(np.var(weights_list))]
+        res['Avg_degree'] = ['{:.6f}'.format(sum(deg_list) / len(nx.degree(graph)))]
+        res['Avg_weight'] = ['{:.6f}'.format(sum(weights_list) / len(weights_list))]
+        res['Avg_weight_abs'] = ['{:.6f}'.format(abs(sum(weights_list) / len(weights_list)))]
+        res['edges'] = [len(graph.edges)]
+        res['nodes'] = [len(graph.nodes)]
+        res['self_loops'] = [len(list(nx.nodes_with_selfloops(graph)))]
+        res['edge_to_node_ratio'] = ['{:.6f}'.format(len(graph.nodes) / len(graph.edges))]
+        res['negative_edges'] = [len([edge for edge in graph.edges if graph[edge[0]][edge[1]]['weight'] < 0])]
+        res['Num_of_zero_weights'] = [len([e for e in graph.edges if 0.005 > abs(graph[e[0]][e[1]]['weight'] > 0)])]
+        res['min_vc'] = [len(aprox.min_weighted_vertex_cover(graph))]
+        for key in res.keys():
+            res[key] = [float(res[key][0])]
+        return res
 

@@ -13,50 +13,47 @@ WORD = re.compile(r"\w+")
 chars = [c for c in string.ascii_lowercase]
 interval = (-10, 10)
 
+
 def annealing(random_start,
               cost_function,
               random_neighbour,
               acceptance,
               temperature,
               maxsteps=1000,
+              max_rejects=0,
               debug=True):
     """ Optimize the black-box function 'cost_function' with the simulated annealing algorithm."""
     state = random_start()
-    cost = cost_function(state)
-    states, costs = [state], [cost]
+    cost, real_f1 = cost_function(state)
+    states, costs, real_scores = [state], [cost], []
+    rejects_counter = 0
     for step in range(maxsteps):
         fraction = step / float(maxsteps)
         T = temperature(fraction)
         new_state = random_neighbour(state, fraction)
-        new_cost = cost_function(new_state)
-        if debug: print("Step #{:>2}/{:>2} : T = {:>4.3g}, state = {}, cost = {:>4.3g}, new_state = {}, "
-                        "new_cost = {:>4.3g} ...".format(step, maxsteps, T, state, cost, new_state, new_cost))
+        new_cost, real_f1 = cost_function(new_state)
+        if real_f1 is not None:
+            real_scores.append(real_f1)
+        if debug:
+            print("Step #{:>2}/{:>2} : T = {:>4.3g}, state = {}, cost = {:>4.3g}, new_state = {}, "
+                  "new_cost = {:>4.3g} ...".format(step, maxsteps, T, state, cost, new_state, new_cost))
         if acceptance(cost, new_cost, T) > rn.random():
             state, cost = new_state, new_cost
             states.append(state)
             costs.append(cost)
-            # print("  ==> Accept it!")
-        # else:
-        #    print("  ==> Reject it...")
-    return state, cost_function(state), states, costs
+            rejects_counter = 0
+        #     print("  ==> Accept it!")
+        else:
+            rejects_counter += 1
+        #     print("  ==> Reject it...")
+        if 0 < max_rejects == rejects_counter:
+            return state, cost_function(state)[0], states, costs, real_scores
+    print(cost_function(state)[0])
+    return state, cost_function(state)[0], states, costs, real_scores
 
 
 def f(x):
     """ Function to minimize."""
-    # tokens_1 = ['e', 'l', 'a', 'd', 'c', 'o', 'h', 'e', 'n']
-    #
-    # res = textdistance.jaccard(tokens_1 , x)
-    # res = textdistance.hamming(''.join(x), 'eladcohen')
-
-    # sol = 'eladcohen'
-    # res = 0
-    # for c in x:
-    #     if c in sol:
-    #         sol = sol.replace(c, '', 1)
-    #         res += 1
-    #     else:
-    #         res -= 1
-    # res = res + 10 if ''.join(x) == 'eladcohen' else res
 
     sol = 'eladcohen'
     res = 0
@@ -84,7 +81,7 @@ def random_start():
 
 def cost_function(x):
     """ Cost of x = f(x)."""
-    return f(x)*-1.0
+    return f(x) * -1.0
 
 
 def random_neighbour(x, fraction=1):
@@ -133,6 +130,6 @@ def text_to_vector(text):
 
 
 if __name__ == '__main__':
-    state, c, states, costs = annealing(random_start, cost_function, random_neighbour, acceptance_probability,
-                                        temperature, maxsteps=1000, debug=True)
+    state, c, states, costs, _ = annealing(random_start, cost_function, random_neighbour, acceptance_probability,
+                                           temperature, maxsteps=1000, debug=True)
     print(sorted(state))

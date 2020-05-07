@@ -26,47 +26,82 @@ class Decision_Tree(AbstractController):
 
     def setUp(self):
         self.dataset = getConfig().eval(self.__class__.__name__, "dataset")
+        self.exclude_log = getConfig().eval(self.__class__.__name__, "exclude_log")
         self.exclude_table_list = getConfig().eval(self.__class__.__name__, "exclude_table_list")
         self.labels = []
+        self.datasets_dfs = dict()
+        for file in listdir(join('data', 'dataset_in')):
+            print('loading ', file)
+            with open('data/dataset_out/target_features.csv', newline='') as csv_file:
+                csv_reader = csv.reader(csv_file, delimiter=',')
+                for row in csv_reader:
+                    if row[0] == str(file.split('.')[0])+"_corr_graph":
+                        target_feature = row[1]
+            df = pd.read_csv(join('data', 'dataset_in', file))
+            if type(df[target_feature]) != 'float64' and type(df[target_feature].dtype) != 'int64':
+                df[target_feature] = df[target_feature].astype('category').cat.codes
+            self.datasets_dfs[file.split('.')[0]] = (df, target_feature)
+
 
     def execute(self, window_start):
         self.datasets = pd.read_csv('data/dataset_out/target_features.csv')['dataset_name'].tolist()
-        with open('data/log.txt', 'w') as log:
-            with open(r'data/dataset.csv', 'w', newline='') as new_dataset:
+        file_mode = 'w'
+        if self.exclude_log:
+            print('recovering from shutdown...')
+            exclusion_list = self._get_exclusion_list()
+            file_mode = 'a'
+        with open(join('data', 'log.txt'), mode=file_mode) as log:
+            if file_mode == 'a':
+                print('writing to log...')
+                log.write('******************************************\n')
+                log.write('              failure recovery            \n')
+                log.write('******************************************\n')
+            with open(join('data', 'dataset.csv'), mode=file_mode, newline='') as new_dataset:
                 new_ds_reader = csv.writer(new_dataset, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                new_ds_reader.writerow(['graph_name', 'acc', 'time', 'average_weighted_F1'])
+                if file_mode == 'w':
+                    new_ds_reader.writerow(['graph_name', 'acc', 'time', 'average_weighted_F1'])
                 for file in listdir('data/sub_graphs'):
+                    if self.exclude_log and file in exclusion_list:
+                        continue
                     log.write('starting {}\n'.format(file))
                     file_path = join('data', 'sub_graphs', file)
                     graph = nx.read_gpickle(file_path)
-                    # graph_features = self.print_graph_features(graph)
-                    # self.plot_graph(graph)
                     dataset_name = file.split('_corr_graph')[0]
                     X_train, X_test, y_train, y_test, num = self.prepare_dataset(dataset_name, graph)
                     res = self.__fit(X_train, X_test, y_train, y_test, self.num_class[dataset_name])
                     # 'accuracy', 'macro avg', 'weighted avg'
-                    print(file)
                     new_ds_reader.writerow([file, res['accuracy'],
                                             res['train_time'], res['average_weighted_F1']])
                     log.write('done {}\n'.format(file))
+                    new_dataset.flush()
+                    log.flush()
 
 
             # self.commit_results(graph_features, res)
+
+    def _get_exclusion_list(self):
+        exclusion_list = set()
+        with open('data/log.txt', 'r') as log:
+            for line in log:
+                if 'done' in line:
+                    exclusion_list.add(line.split(' ')[1].replace('\n', ''))
+        return exclusion_list
 
     def prepare_dataset(self, dataset_name='', graph=None):
 
         # extracting feature names from graph
         features = [node for node in graph.nodes]
         # reading the dataset into pandas df
-        df = pd.read_csv('data/dataset_in/' + dataset_name + ".csv")
+        df = self.datasets_dfs[dataset_name][0]
         # get the dataset's target
         self.labels = []
         if self.db.is_csv:
-            with open('data/dataset_out/target_features.csv', newline='') as csv_file:
-                csv_reader = csv.reader(csv_file, delimiter=',')
-                for row in csv_reader:
-                    if row[0] == dataset_name+"_corr_graph":
-                        target_feature = row[1]
+            # with open('data/dataset_out/target_features.csv', newline='') as csv_file:
+            #     csv_reader = csv.reader(csv_file, delimiter=',')
+            #     for row in csv_reader:
+            #         if row[0] == dataset_name+"_corr_graph":
+            #             target_feature = row[1]
+            target_feature = self.datasets_dfs[dataset_name][1]
             self.labels = set(df[target_feature].tolist())
             #self.labels.remove(self.labels[0])
             self.num_class[dataset_name] = len(self.labels)
@@ -75,12 +110,12 @@ class Decision_Tree(AbstractController):
                                                + dataset_name + "_corr_graph\'")[0][0]
 
         # convert categorical to numeric
-        if self.db.is_csv:
-            if type(df[target_feature]) != 'float64' and type(df[target_feature].dtype) != 'int64':
-                df[target_feature] = df[target_feature].astype('category').cat.codes
-        else:
-            if df[target_feature].dtype != 'float64' and df[target_feature].dtype != 'int64':
-                df[target_feature] = df[target_feature].astype('category').cat.codes
+        # if self.db.is_csv:
+        #     if type(df[target_feature]) != 'float64' and type(df[target_feature].dtype) != 'int64':
+        #         df[target_feature] = df[target_feature].astype('category').cat.codes
+        # else:
+        #     if df[target_feature].dtype != 'float64' and df[target_feature].dtype != 'int64':
+        #         df[target_feature] = df[target_feature].astype('category').cat.codes
         # split data to test and train
         if target_feature in features:
             raise ValueError('Label must not be in training X set')

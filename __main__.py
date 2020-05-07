@@ -23,6 +23,7 @@ from DB.schema_definition import DB
 from graph_generation.sub_graph_generation_algo_feature_selection import algo_feature_selection
 from prediction.challenge import challenge_prediction
 from feature_selection.SA_feature_selection import simulated_annealing_feature_selection
+from Test_Module.benchmark import benchmark
 
 modules_dict = {}
 
@@ -45,6 +46,7 @@ modules_dict['GA_Feature_Selection'] = GA_Feature_Selection
 modules_dict['test_dataset_cross_validation'] = test_dataset_cross_validation
 modules_dict['challenge_prediction'] = challenge_prediction
 modules_dict['simulated_annealing_feature_selection'] = simulated_annealing_feature_selection
+modules_dict['benchmark'] = benchmark
 
 window_start = getConfig().eval("DEFAULT", "start_date")
 disable_prints = getConfig().eval("DEFAULT", "disable_prints")

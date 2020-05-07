@@ -16,6 +16,8 @@ from sklearn.feature_selection import SelectKBest, f_classif, SelectFromModel, m
 
 import warnings
 
+from tool_kit.log_utils import get_exclude_list
+
 
 class algo_feature_selection(AbstractController):
 
@@ -25,6 +27,7 @@ class algo_feature_selection(AbstractController):
         self.db = db
 
     def setUp(self):
+        self.continue_from_log = getConfig().eval(self.__class__.__name__, "continue_from_log")
         self.clear_existing_subgraphs = getConfig().eval(self.__class__.__name__, "clear_existing_subgraphs")
         self.save_path = getConfig().eval(self.__class__.__name__, "save_path")
         self.corr_threshold = getConfig().eval(self.__class__.__name__, "corr_threshold")
@@ -33,15 +36,21 @@ class algo_feature_selection(AbstractController):
 
     def execute(self, window_start):
         print('algo selection')
+        exclusion_list = []
         # clear old gpickle graph files
         if os.path.exists('data/sub_graphs'):
             if self.clear_existing_subgraphs:
                 self.clear_graphs()
         else:
             os.mkdir('data/sub_graphs')
+        if self.continue_from_log:
+            exclusion_list = get_exclude_list(os.path.join('data', 'loader_log.csv'))
         # execute feature selection
         datasets = pd.read_csv('data/dataset_out/target_features.csv')['dataset_name'].tolist()
         for data in datasets:
+            if self.continue_from_log and data.replace('_corr_graph', '.csv') in exclusion_list:
+                print('skipped: ', data)
+                continue
             # if not os.path.exists('data/sub_graphs/' + data):
             #     os.mkdir('data/sub_graphs/' + data)
             input_df = pd.read_csv(os.path.join('data', self.input_folder, (data.split('_corr_graph')[0] + '.csv')))

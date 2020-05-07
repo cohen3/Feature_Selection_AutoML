@@ -23,11 +23,15 @@ class XgboostRegression(AbstractController):
 
     def execute(self, window_start):
         df = pd.read_csv(self.data_path)
+        if 'graph_name' in df.columns:
+            df = df.drop('graph_name', axis=1)
+        if 'dataset_name' in df.columns:
+            df = df.drop('dataset_name', axis=1)
         X = df.drop('target', axis=1)
         Y = df['target']
-        X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.3, random_state=2)
-
-        xgbreg = XGBRegressor()
+        X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.1)
+        print(X.columns)
+        xgbreg = XGBRegressor(n_jobs=-1, n_estimators=1024, objective='reg:squarederror')
         # score = cross_val_score(xgbreg, X, Y, n_jobs=-1)
         model = xgbreg.fit(X_train, y_train)
         pred1 = model.score(X_test, y_test)

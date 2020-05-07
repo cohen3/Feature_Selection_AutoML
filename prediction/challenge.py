@@ -23,6 +23,7 @@ class challenge_prediction(AbstractController):
         self.model_path = getConfig().eval(self.__class__.__name__, "model_path")
         self.path_to_truth = getConfig().eval(self.__class__.__name__, "path_to_truth")
         self.eval_only = getConfig().eval(self.__class__.__name__, "eval_only")
+        self.corr_threshold = getConfig().eval(self.__class__.__name__, "corr_threshold")
 
     def preprocess(self, df):
         # categorical values to numeric codes
@@ -46,6 +47,11 @@ class challenge_prediction(AbstractController):
             df = df.drop(df.columns[0], axis=1)
             df = df.set_index(df.columns)
             full_graph = nx.from_pandas_adjacency(df)
+            print('calculating invalid edges...')
+            egdes_to_remove = [edge for edge in full_graph.edges
+                               if abs(full_graph[edge[0]][edge[1]]['weight']) > self.corr_threshold]
+            print('removing edges...')
+            full_graph.remove_edges_from(egdes_to_remove)
             scores = list()
 
             print('dataset: {}'.format('cm_' + str(i) + '.csv'))
@@ -79,25 +85,32 @@ class challenge_prediction(AbstractController):
         res['Avg_CC'] = [aprox.average_clustering(graph)]
         res['Median_deg'] = ['{:.6f}'.format(np.median(deg_list))]
         res['Variance_deg'] = ['{:.6f}'.format(np.var(deg_list))]
-        res['Median_wights'] = ['{:.6f}'.format(np.median(weights_list))]
-        res['Variance_wights'] = ['{:.6f}'.format(np.var(weights_list))]
+        res['Median_wights'] = ['{:.6f}'.format(np.median(weights_list) if len(weights_list) > 0 else 0)]
+        res['Variance_wights'] = ['{:.6f}'.format(np.var(weights_list) if len(weights_list) > 0 else 0)]
         res['Avg_degree'] = ['{:.6f}'.format(sum(deg_list) / len(nx.degree(graph)))]
-        res['Avg_weight'] = ['{:.6f}'.format(sum(weights_list) / len(weights_list))]
-        res['Avg_weight_abs'] = ['{:.6f}'.format(abs(sum(weights_list) / len(weights_list)))]
+        res['Avg_weight'] = ['{:.6f}'.format(sum(weights_list) / len(weights_list) if len(weights_list) > 0 else 0)]
+        res['Avg_weight_abs'] = ['{:.6f}'.format(abs(sum(weights_list) / len(weights_list) if len(weights_list) > 0 else 0))]
         res['edges'] = [len(graph.edges)]
         res['nodes'] = [len(graph.nodes)]
         res['self_loops'] = [len(list(nx.nodes_with_selfloops(graph)))]
-        res['edge_to_node_ratio'] = ['{:.6f}'.format(len(graph.nodes) / len(graph.edges))]
+        res['edge_to_node_ratio'] = ['{:.6f}'.format(len(graph.nodes) / len(graph.edges) if len(graph.edges) > 0 else 0)]
         res['negative_edges'] = [len([edge for edge in graph.edges if graph[edge[0]][edge[1]]['weight'] < 0])]
         res['Num_of_zero_weights'] = [len([e for e in graph.edges if 0.005 > abs(graph[e[0]][e[1]]['weight'] > 0)])]
         res['min_vc'] = [len(aprox.min_weighted_vertex_cover(graph))]
+        for key in res.keys():
+            res[key] = [float(res[key][0])]
         return res
 
     def _get_score(self, X_test, as_dict=False):
         if as_dict:
             X_test = pd.DataFrame.from_dict(X_test)
         model = pickle.load(open(self.model_path, 'rb'))
-        pred = model.predict(X_test)
+        try:
+            pred = model.predict(X_test)
+        except Exception as e:
+            for index, row in X_test.iterrows():
+                print(X_test.iloc[index])
+            x=input()
         return pred[0]
 
     def __get_eval(self):
