@@ -7,7 +7,7 @@ from tool_kit.AbstractController import AbstractController
 from dataset_loader import corr_calc
 
 from sklearn.metrics import precision_score, recall_score, roc_curve, auc, accuracy_score, f1_score
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, KFold
 from sklearn.tree import DecisionTreeClassifier
 
 import os
@@ -72,11 +72,12 @@ class simulated_annealing_feature_selection(AbstractController):
         state, c, states, costs, real_scores = annealing(self.random_start, self.cost_function, self.random_neighbour,
                                                          self.acceptance_probability, self.temperature,
                                                          maxsteps=iterations, max_rejects=self.early_stop, debug=False)
-        res = {'method': "SA", 'features': state, 'time': time.perf_counter() - start, self.target: c}
-        with open(os.path.join('data', 'fs_benchmark_v2.csv'), 'a') as f:
+        read_eval = self.train_real_data(state)
+        res = {'method': "SA", 'features': state, 'time': time.perf_counter() - start, self.target: read_eval, 'supervised': False}
+        with open(os.path.join('data', 'fs_benchmark_{}.csv'.format(self.dataset.split('/')[-1])), 'a') as f:
             w = csv.DictWriter(f, res.keys())
             w.writerow(res)
-        print('state: {}\nf1: {}\nreal_eval: {}'.format(sorted(state), c, self.train_real_data(state)))
+        print('state: {}\nf1: {}\nreal_eval: {}'.format(sorted(state), c, read_eval))
 
         states.append(state)
         if len(real_scores) == 0:
@@ -209,14 +210,15 @@ class simulated_annealing_feature_selection(AbstractController):
         return max(0.01, min(1, 1 - fraction))
 
     def train_real_data(self, x):
-        X_train, X_test, y_train, y_test = train_test_split(self.data[x], self.data[self.target_att],
-                                                            test_size=0.1, random_state=2)
+        res = {'accuracy': list(), 'average_weighted_F1': list()}
         clf = DecisionTreeClassifier(random_state=23)
-        clf = clf.fit(X_train, y_train)
+        kf = KFold(n_splits=10, shuffle=True, random_state=2)
+        for train_index, test_index in kf.split(self.data):
+            X_train, X_test = self.data[x].iloc[train_index], self.data[x].iloc[test_index]
+            y_train, y_test = self.data[self.target_att].iloc[train_index], self.data[self.target_att].iloc[test_index]
+            model = clf.fit(X_train, y_train)
+            y_pred = model.predict(X_test)
 
-        y_pred = clf.predict(X_test)
-
-        res = dict()
-        res['accuracy'] = accuracy_score(y_test, y_pred)
-        res['average_weighted_F1'] = f1_score(y_test, y_pred, average='weighted')
-        return res[self.target]
+            res['accuracy'].append(accuracy_score(y_test, y_pred))
+            res['average_weighted_F1'].append(f1_score(y_test, y_pred, average='weighted'))
+        return np.average(res[self.target])
