@@ -24,7 +24,11 @@ from graph_generation.sub_graph_generation_algo_feature_selection import algo_fe
 from prediction.challenge import challenge_prediction
 from feature_selection.SA_feature_selection import simulated_annealing_feature_selection
 from Test_Module.benchmark import benchmark
+from dataset_loader.full_graph_feature_extraction import full_graph_fs
+from dataset_generation.global_local_feature_extraction import global_local_fs
+import logging
 
+logging.basicConfig(filename='progression_log.txt', level=logging.DEBUG)
 modules_dict = {}
 
 # modules_dict["DB"] = DB
@@ -32,6 +36,7 @@ modules_dict["DB"] = CSV_DB
 # db = DB()
 db = CSV_DB()
 modules_dict['data_loader'] = data_loader
+modules_dict['full_graph_fs'] = full_graph_fs
 modules_dict['graph_generation'] = graph_generation
 modules_dict['algo_feature_selection'] = algo_feature_selection
 modules_dict['random_selection'] = random_selection
@@ -39,6 +44,8 @@ modules_dict['random_walk'] = random_walk
 modules_dict['structural_feature_extraction'] = structural_feature_extraction
 modules_dict['xgboost_generator'] = xgboost_generator
 modules_dict['Decision_Tree'] = Decision_Tree
+modules_dict['global_local_fs'] = global_local_fs
+modules_dict['full_graph_fs'] = full_graph_fs
 modules_dict['sub2vec'] = sub2vec
 modules_dict['RandomForestReg'] = RandomForestReg
 modules_dict['XgboostRegression'] = XgboostRegression
@@ -71,9 +78,11 @@ for module in getConfig().sections():
 bmrk = {"config": getConfig().getfilename(), "window_start": "setup"}
 for module in pipeline:
     print(bcolors.YELLOW + 'Started setup ' + module.__class__.__name__ + bcolors.ENDC)
+    logging.info(f"starting setup {module.__class__.__name__}")
     T = time.perf_counter()
     module.setUp()
     T = time.perf_counter() - T
+    logging.info(f"finished setup {module.__class__.__name__}")
     print(bcolors.YELLOW + 'Finished setup ' + module.__class__.__name__ + bcolors.ENDC)
     bmrk[module.__class__.__name__] = T
 
@@ -82,6 +91,7 @@ bmrk_file.flush()
 
 bmrk = {"config": getConfig().getfilename(), "window_start": "execute"}
 for module in pipeline:
+    logging.info(f"Started executing {module.__class__.__name__}")
     T = time.time()
     print(bcolors.YELLOW + 'Started executing ' + module.__class__.__name__ + bcolors.ENDC)
 
@@ -89,6 +99,7 @@ for module in pipeline:
 
     print(bcolors.YELLOW + 'Finished executing ' + module.__class__.__name__ + bcolors.ENDC)
     T = time.time() - T
+    logging.info(f"Finished executing {module.__class__.__name__}")
     bmrk[module.__class__.__name__] = T
 
 bmrk_results.writerow(bmrk)

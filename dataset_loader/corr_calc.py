@@ -6,7 +6,10 @@ from itertools import product
 
 
 def perason(df):
-    return df.corr(method="pearson")
+    cols = df.columns.tolist()
+    c = np.corrcoef(df.T)
+    return pd.DataFrame(data=c, index=cols, columns=cols)
+    # return df.corr(method="pearson")
 
 
 def kendell(df):

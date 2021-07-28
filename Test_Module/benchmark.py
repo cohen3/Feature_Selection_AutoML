@@ -6,6 +6,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import KFold
 from feature_selection.CFS_algorithm import cfs, fcbf
 from feature_selection.UDFS_algorithm import udfs, feature_ranking
+from feature_selection.SPEC_algorithm import spec, feature_ranking_spec
 from tool_kit.AbstractController import AbstractController
 from configuration.configuration import getConfig
 from skfeature.function.statistical_based import CFS
@@ -36,7 +37,7 @@ class benchmark(AbstractController):
         x = df[df.columns.difference([self.target_att])]
         y = df[[self.target_att]]
         out_df = pd.DataFrame(self.bench(df, x, y, n=y.nunique().values[0]))
-        out_df.to_csv(os.path.join(self.out, 'fs_benchmark_{}.csv'.format(self.dataset.split('/')[-1])), index=False)
+        out_df.to_csv(os.path.join(self.out, 'fs_benchmark_{}_spec.csv'.format(self.dataset.split('/')[-1])), index=False)
 
     def bench(self, X, X_norm, y, n=2):
         num_feats = 20
@@ -77,11 +78,11 @@ class benchmark(AbstractController):
         # output_data['supervised'].append(True)
         # output_data[self.test_att].append(self.train_real_data(selected_features, X))
         # print(output_data)
-        output_data['method'].append('FCBF')
-        output_data['time'].append(9999999)
-        output_data['features'].append([])
-        output_data['supervised'].append(True)
-        output_data[self.test_att].append(0.0)
+        # output_data['method'].append('FCBF')
+        # output_data['time'].append(9999999)
+        # output_data['features'].append([])
+        # output_data['supervised'].append(True)
+        # output_data[self.test_att].append(0.0)
 
         # UDFS: Unsupervised Discriminative Feature Selection
         start = time.perf_counter()
@@ -95,10 +96,32 @@ class benchmark(AbstractController):
         output_data[self.test_att].append(self.train_real_data(selected_features, X))
         print(output_data)
 
+        # SPEC: Spectral Feature Selection
+        start = time.perf_counter()
+        score = spec(X_norm.to_numpy())
+        idx = feature_ranking_spec(score)
+        selected_features = X_norm.iloc[:, idx[0: num_feats]].columns.tolist()
+        output_data['method'].append('SPEC')
+        output_data['time'].append(time.perf_counter() - start)
+        output_data['features'].append(selected_features)
+        output_data['supervised'].append(False)
+        output_data[self.test_att].append(self.train_real_data(selected_features, X))
+        print(output_data)
+
         # Mrmr: minimum redundency maximum relevance
         start = time.perf_counter()
-        mrmr = pymrmr.mRMR(X_norm, 'MIQ', 10)
-        output_data['method'].append('MRMR')
+        mrmr = pymrmr.mRMR(X_norm, 'MIQ', num_feats)
+        output_data['method'].append('MRMR(MIQ)')
+        output_data['time'].append(time.perf_counter() - start)
+        output_data['features'].append(mrmr)
+        output_data['supervised'].append(False)
+        output_data[self.test_att].append(self.train_real_data(mrmr, X))
+        print(output_data)
+
+        # Mrmr: minimum redundency maximum relevance
+        start = time.perf_counter()
+        mrmr = pymrmr.mRMR(X_norm, 'MID', num_feats)
+        output_data['method'].append('MRMR(MID)')
         output_data['time'].append(time.perf_counter() - start)
         output_data['features'].append(mrmr)
         output_data['supervised'].append(False)

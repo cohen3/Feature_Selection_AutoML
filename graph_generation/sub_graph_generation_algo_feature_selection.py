@@ -62,6 +62,7 @@ class algo_feature_selection(AbstractController):
             input_label = input_label[['target_feature']].values.tolist()[0][0]
             label_df = input_df[[input_label]]
             data_df = input_df.loc[:, input_df.columns != input_label]
+            full_graph = nx.read_gpickle('data/full_graphs/'+data.split('_corr_graph')[0]+'_full_graph.gpickle')
             classifiers = {"SGDClassifier": SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,
                                                           random_state=0, tol=None),
                            "LinearSVC": LinearSVC(C=0.01, penalty="l1", dual=False),
@@ -87,11 +88,13 @@ class algo_feature_selection(AbstractController):
                     indexes = [i for i, x in enumerate(feature_idx) if x is True]
                     graph = pd.read_csv(os.path.join('data', self.output_folder,(data+'.csv')))
                     graph = graph.iloc[indexes, indexes]
-                    graph = graph.set_index(graph.columns)
-                    graph = nx.from_pandas_adjacency(graph)
-                    egdes_to_remove = [edge for edge in graph.edges
-                                       if abs(graph[edge[0]][edge[1]]['weight']) > self.corr_threshold]
-                    graph.remove_edges_from(egdes_to_remove)
+                    features_to_keep = graph.columns
+                    graph = nx.subgraph(full_graph, features_to_keep)
+                    # graph = graph.set_index(graph.columns)
+                    # graph = nx.from_pandas_adjacency(graph)
+                    # egdes_to_remove = [edge for edge in graph.edges
+                    #                    if abs(graph[edge[0]][edge[1]]['weight']) > self.corr_threshold]
+                    # graph.remove_edges_from(egdes_to_remove)
                     nx.write_gpickle(graph,
                                      'data/sub_graphs/' + data + '_subgraph_' + clf_name + '_' + str(
                                          generated_graph_counter) + '.gpickle')
@@ -105,11 +108,13 @@ class algo_feature_selection(AbstractController):
                 indexes = [i for i, x in enumerate(feature_idx) if x is True]
                 graph = pd.read_csv(os.path.join('data', self.output_folder, (data+'.csv')))
                 graph = graph.iloc[indexes, indexes] # create matrix of subgraph based on indexes
-                graph = graph.set_index(graph.columns)
-                graph = nx.from_pandas_adjacency(graph) # create graph from matrix
-                egdes_to_remove = [edge for edge in graph.edges
-                                   if abs(graph[edge[0]][edge[1]]['weight']) > self.corr_threshold] #remove unwanted edges
-                graph.remove_edges_from(egdes_to_remove)
+                features_to_keep = graph.columns
+                graph = nx.subgraph(full_graph, features_to_keep)
+                # graph = graph.set_index(graph.columns)
+                # graph = nx.from_pandas_adjacency(graph) # create graph from matrix
+                # egdes_to_remove = [edge for edge in graph.edges
+                #                    if abs(graph[edge[0]][edge[1]]['weight']) > self.corr_threshold] #remove unwanted edges
+                # graph.remove_edges_from(egdes_to_remove)
                 nx.write_gpickle(graph, 'data/sub_graphs/' + data + '_subgraph_' + func_name + '_' + str(
                     generated_graph_counter) + '.gpickle')
                 generated_graph_counter += 1

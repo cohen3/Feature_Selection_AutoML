@@ -46,15 +46,16 @@ class random_walk(AbstractController):
             print(bcolors.BOLD + bcolors.UNDERLINE + bcolors.OKBLUE + 'Dataset: ' + data
                   + bcolors.ENDC + bcolors.ENDC + bcolors.ENDC)
             # calculate number of max vertexes
-            df = pd.read_csv('data/dataset_out/'+data+'.csv')
-            df = df.set_index(df.columns)
-            print('building full graph...')
-            full_graph = nx.from_pandas_adjacency(df)
-            print('calculating invalid edges...')
-            egdes_to_remove = [edge for edge in full_graph.edges
-                               if abs(full_graph[edge[0]][edge[1]]['weight']) > self.corr_threshold]
-            print('removing edges...')
-            full_graph.remove_edges_from(egdes_to_remove)
+            # df = pd.read_csv('data/dataset_out/'+data+'.csv')
+            # df = df.set_index(df.columns)
+            # print('building full graph...')
+            # full_graph = nx.from_pandas_adjacency(df)
+            # print('calculating invalid edges...')
+            # egdes_to_remove = [edge for edge in full_graph.edges
+            #                    if abs(full_graph[edge[0]][edge[1]]['weight']) > self.corr_threshold]
+            # print('removing edges...')
+            # full_graph.remove_edges_from(egdes_to_remove)
+            full_graph = nx.read_gpickle('data/full_graphs/' + data.split('_corr_graph')[0] + '_full_graph.gpickle')
             if 'cliques' in self.method or 'all' in self.method:
                 print('finding cliques...')
                 cliques = nx.find_cliques(full_graph)

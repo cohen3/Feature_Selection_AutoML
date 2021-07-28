@@ -53,12 +53,13 @@ class random_selection(AbstractController):
             # calculate number of max vertexes
             df = pd.read_csv('data/dataset_out/' + data + '.csv')
             graph_len = len(df.columns) - 1
-            max_vertexes = int(graph_len * self.vertex_threshold)
-            df = df.set_index(df.columns)
-            full_graph = nx.from_pandas_adjacency(df)
-            egdes_to_remove = [edge for edge in full_graph.edges
-                               if abs(full_graph[edge[0]][edge[1]]['weight']) > self.corr_threshold]
-            full_graph.remove_edges_from(egdes_to_remove)
+            full_graph = nx.read_gpickle('data/full_graphs/' + data.split('_corr_graph')[0] + '_full_graph.gpickle')
+            # max_vertexes = int(graph_len * self.vertex_threshold)
+            # df = df.set_index(df.columns)
+            # full_graph = nx.from_pandas_adjacency(df)
+            # egdes_to_remove = [edge for edge in full_graph.edges
+            #                    if abs(full_graph[edge[0]][edge[1]]['weight']) > self.corr_threshold]
+            # full_graph.remove_edges_from(egdes_to_remove)
             subgraphs_set = []
             # generate as many sub graphs as indicated in the config file
             nodes_count = len(full_graph.nodes) - 1

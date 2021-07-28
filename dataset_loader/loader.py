@@ -4,7 +4,7 @@ from os import listdir
 from os.path import isfile, join
 import pandas as pd
 import numpy as np
-
+import networkx as nx
 from configuration.configuration import getConfig
 from tool_kit.AbstractController import AbstractController
 from tool_kit.colors import bcolors
@@ -19,6 +19,7 @@ class data_loader(AbstractController):
         self.continue_from_log = getConfig().eval(self.__class__.__name__, "continue_from_log")
         self.csv_data_path = getConfig().eval(self.__class__.__name__, "csv_data_path")
         self.corr_method = getConfig().eval(self.__class__.__name__, "corr_function")
+        self.corr_threshold = getConfig().eval(self.__class__.__name__, "corr_threshold")
         self.data_files = [f for f in listdir(self.csv_data_path) if isfile(join(self.csv_data_path, f))]
         self.corr_mat = {}
         self.targets = {"dataset_name": [], "target_feature": []}
@@ -58,6 +59,27 @@ class data_loader(AbstractController):
                 self.targets["target_feature"].append('class')
             else:
                 self.targets["target_feature"].append(df.columns[-1])
+            fg = self.corr_mat[str(os.path.splitext(file)[0])+'_corr_graph'].set_index(self.corr_mat[str(os.path.splitext(file)[0])+'_corr_graph'].columns)
+            full_graph = nx.from_pandas_adjacency(fg)
+            if not os.path.exists(os.path.join('data', 'full_graphs')):
+                os.makedirs(os.path.join('data', 'full_graphs'))
+            egdes_to_remove = [edge for edge in full_graph.edges
+                               if abs(full_graph[edge[0]][edge[1]]['weight']) > self.corr_threshold]
+            full_graph.remove_edges_from(egdes_to_remove)
+            bb = nx.betweenness_centrality(full_graph)
+            nx.set_node_attributes(full_graph, bb, 'global_betweenness')
+            dg = {k: v for k, v in full_graph.degree()}
+            nx.set_node_attributes(full_graph, dg, 'global_degree')
+            average_weights = dict()
+            for node in full_graph.nodes:
+                av = np.average([full_graph[node][n]['weight'] for n in full_graph.neighbors(node)])
+                average_weights[node] = av
+            nx.set_node_attributes(full_graph, average_weights, 'global_average_edge_weight')
+            h, a = nx.hits(full_graph, max_iter=1000)
+            nx.set_node_attributes(full_graph, a, 'global_authority')
+            nx.set_node_attributes(full_graph, h, 'global_hub')
+            nx.write_gpickle(full_graph, os.path.join('data', 'full_graphs',
+                                                      str(os.path.splitext(file)[0] + '_full_graph.gpickle')))
             # builtin {‘pearson’, ‘kendall’, ‘spearman’}
 
     def preprocess(self, df):

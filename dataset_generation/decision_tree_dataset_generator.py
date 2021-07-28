@@ -56,7 +56,7 @@ class Decision_Tree(AbstractController):
                 log.write('******************************************\n')
                 log.write('              failure recovery            \n')
                 log.write('******************************************\n')
-            with open(join('data', 'dataset.csv'), mode=file_mode, newline='') as new_dataset:
+            with open(join('data', 'dataset_LOU.csv'), mode=file_mode, newline='') as new_dataset:
                 new_ds_reader = csv.writer(new_dataset, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 if file_mode == 'w':
                     new_ds_reader.writerow(['graph_name', 'acc', 'time', 'average_weighted_F1'])

@@ -61,7 +61,10 @@ class test_dataset_cross_validation(AbstractController):
                     rfc = RandomForestRegressor(n_jobs=-1, random_state=22, n_estimators=1024)
                 model = rfc.fit(X_train, y_train)
 
-                pred1 = model.score(X_test, y_test)
+                try:
+                    pred1 = model.score(X_test, y_test)
+                except Exception as e:
+                    continue
                 preds.append(pred1)
                 writer.writerow({'run_number': i, 'R-squared_score': pred1,
                                  'test_dataset': test_dataset.split('_corr_graph')[0]})
